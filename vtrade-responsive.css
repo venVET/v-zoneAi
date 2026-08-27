@@ -1,0 +1,42 @@
+
+/* V TRADE AI — Fluid App Responsive System V1
+   Bootstrap-like sizing without desktop-to-phone scaling. */
+:root{
+  --v-content-max: 1680px;
+  --v-gutter: clamp(10px, 2vw, 28px);
+  --v-gap: clamp(10px, 1.35vw, 22px);
+  --v-radius: clamp(12px, 1.2vw, 20px);
+}
+html{width:100%;max-width:100%;overflow-x:clip}
+body{width:100%;max-width:100%;overflow-x:clip}
+img,svg,canvas,video{max-width:100%;height:auto}
+button,a,input,select,textarea{max-width:100%}
+table{max-width:100%}
+.v-fluid-container{width:min(calc(100% - 2 * var(--v-gutter)),var(--v-content-max));margin-inline:auto}
+.v-fluid-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:var(--v-gap)}
+.v-fluid-card{min-width:0}
+.v-scroll-x{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.v-safe{padding-left:max(var(--v-gutter),env(safe-area-inset-left));padding-right:max(var(--v-gutter),env(safe-area-inset-right))}
+@media (max-width: 900px){
+  .v-desktop-only{display:none!important}
+  .v-mobile-only{display:block!important}
+}
+@media (min-width: 901px){
+  .v-mobile-only{display:none!important}
+}
+@media (max-width: 600px){
+  :root{--v-gutter:12px;--v-gap:10px}
+  .content,.wrap,.shell{width:100%;max-width:100%;padding-left:var(--v-gutter)!important;padding-right:var(--v-gutter)!important}
+  .grid,.cards,.stats,.packages,.quick,.radar,.gategrid,.mainrow{grid-template-columns:1fr!important}
+  .toolbar,.tools{grid-template-columns:1fr!important;width:100%!important}
+  .page-head,.topbar,.top,.market{min-width:0;max-width:100%;flex-wrap:wrap}
+  .price{font-size:clamp(22px,7vw,30px)!important}
+  .card,.panel,.box{min-width:0;max-width:100%}
+}
+@media (max-width: 380px){
+  :root{--v-gutter:9px}
+  body{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}

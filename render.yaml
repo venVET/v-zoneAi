@@ -1,0 +1,101 @@
+services:
+  - type: web
+    name: v-trade-ai
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server-launcher.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RENDER
+        value: "true"
+      - key: PORT
+        value: "10000"
+      - key: NODE_VERSION
+        value: "24.14.1"
+      - key: APP_BASE_URL
+        value: https://vetven964.github.io
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: AUTH_SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: ADMIN_TOTP_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://vetven964.github.io
+      - key: MT5_BRIDGE_API_KEY
+        sync: false
+      - key: MT5_SYMBOL
+        value: XAUUSD
+      - key: MT5_MAX_AGE_MS
+        value: "15000"
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: STORAGE_RETENTION_DAYS
+        value: "30"
+      - key: STORAGE_QUOTE_INTERVAL_MS
+        value: "10000"
+      - key: NEWS_CALENDAR_URLS
+        value: https://nfs.faireconomy.media/ff_calendar_thisweek.json,https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json
+      - key: NEWS_CACHE_MS
+        value: "15000"
+      - key: NEWS_BRIDGE_MAX_AGE_MS
+        value: "600000"
+      - key: NEWS_PRELOCK_MIN
+        value: "15"
+      - key: NEWS_CAUTION_MIN
+        value: "60"
+      - key: NEWS_LIVE_WINDOW_MIN
+        value: "2"
+      - key: NEWS_POST_MIN
+        value: "15"
+      - key: TELEGRAM_NEWS_ALERTS
+        value: "true"
+      - key: TELEGRAM_MIN_SCORE
+        value: "76"
+      - key: TELEGRAM_AUTO_ALERT_ENABLED
+        value: "true"
+      - key: TELEGRAM_AUTO_ALERT_INTERVAL_MS
+        value: "15000"
+      - key: TELEGRAM_WAIT_ALERT_COOLDOWN_MS
+        value: "900000"
+      - key: NEWS_FAIL_CLOSED
+        value: "false"
+      - key: AI_DATA_QUALITY_MIN
+        value: "75"
+      - key: MIN_CONFLUENCE
+        value: "76"
+      - key: MIN_ENTRY_SCORE
+        value: "76"
+      - key: OPENAI_ENABLED
+        value: "true"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.6-luna
+      - key: OPENAI_TIMEOUT_MS
+        value: "9000"
+      - key: OPENAI_MIN_SCORE
+        value: "76"
+      - key: AUTO_TRADE_ENABLED
+        value: "false"
+      - key: AUTO_TRADE_MIN_SCORE
+        value: "76"
+      - key: AUTO_TRADE_LOT
+        value: "0.01"
+      - key: AUTO_TRADE_MAX_LOT
+        value: "0.02"
+      - key: AUTO_TRADE_TRAIL_TRIGGER
+        value: "2.00"
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
