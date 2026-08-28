@@ -15,9 +15,9 @@ const HOST = '0.0.0.0';
 // Telegram is user-configurable. Tokens are never sent to the browser and are kept
 // only in server memory for the active session. Optional env credentials remain
 // supported for owner/admin fallback deployments.
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
-const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+const TELEGRAM_TOKEN = String(process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '').trim();
+const TELEGRAM_CHAT_ID = String(process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TARGET_CHAT_ID || '').trim();
+const TELEGRAM_WEBHOOK_SECRET = String(process.env.TELEGRAM_WEBHOOK_SECRET || '').trim();
 const TELEGRAM_WEBHOOK_BASE_URL = (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 const TELEGRAM_WEBHOOK_SECRET_EFFECTIVE = TELEGRAM_WEBHOOK_SECRET || crypto.randomBytes(32).toString('hex');
 const MT5_BRIDGE_API_KEY = process.env.MT5_BRIDGE_API_KEY || '';
@@ -25,8 +25,8 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 const REQUIRE_WEBHOOK_SECRET = String(process.env.REQUIRE_WEBHOOK_SECRET || 'false').toLowerCase() === 'true';
 const TELEGRAM_SESSION_TTL_MS = Math.max(5 * 60 * 1000, Number(process.env.TELEGRAM_SESSION_TTL_MS || 24 * 60 * 60 * 1000));
 const MT5_MAX_AGE_MS = Number(process.env.MT5_MAX_AGE_MS || 15000);
-const APP_VERSION = '7.3.2-TELEGRAM-FIX';
-const APP_BASE_URL = (process.env.APP_BASE_URL || '').replace(/\/$/, '');
+const APP_VERSION = '7.3.3-TELEGRAM-FIX';
+const APP_BASE_URL = (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 const AUTH_SESSION_TTL_MS = Math.max(15 * 60 * 1000, Number(process.env.AUTH_SESSION_TTL_MS || 8 * 60 * 60 * 1000));
 const ANALYSIS_REQUEST_TIMEOUT_MS = Math.max(1500, Number(process.env.ANALYSIS_REQUEST_TIMEOUT_MS || 7000));
 const AUTH_MAX_SESSIONS = Math.max(100, Math.min(10000, Number(process.env.AUTH_MAX_SESSIONS || 2000)));
@@ -1604,13 +1604,24 @@ if(bot){
   bot.onText(/^\/status(?:@\w+)?$/,async msg=>{
     const p=brokerLivePrice();
     const feed=p ? `🟢 MT5 READY | ${p.price.toFixed(2)} | age ${p.ageSec}s` : '🟠 MT5 feed not ready/stale';
-    await bot.sendMessage(msg.chat.id,`🟢 V TRADE AI online\n${feed}\nTelegram webhook: ACTIVE`);
+    let webhook='UNKNOWN';
+    try { const info=await bot.getWebHookInfo(); webhook=info?.url ? `ACTIVE | pending ${info.pending_update_count || 0}` : 'NOT SET'; } catch(_) {}
+    await bot.sendMessage(msg.chat.id,`🟢 V TRADE AI online\n${feed}\nTelegram webhook: ${webhook}`);
   });
 
-  if(process.env.RENDER && APP_BASE_URL){
-    bot.setWebHook(`${APP_BASE_URL}/telegram/webhook`,{secret_token:TELEGRAM_WEBHOOK_SECRET_EFFECTIVE})
-      .then(()=>console.log(`[TELEGRAM WEBHOOK] ACTIVE | ${APP_BASE_URL}/telegram/webhook`))
+  if(process.env.RENDER && TELEGRAM_WEBHOOK_BASE_URL){
+    const webhookUrl=`${TELEGRAM_WEBHOOK_BASE_URL}/telegram/webhook`;
+    bot.setWebHook(webhookUrl,{secret_token:TELEGRAM_WEBHOOK_SECRET_EFFECTIVE})
+      .then(async()=>{
+        console.log(`[TELEGRAM WEBHOOK] ACTIVE | ${webhookUrl}`);
+        try {
+          const info=await bot.getWebHookInfo();
+          console.log(`[TELEGRAM WEBHOOK] VERIFY | url=${info?.url || 'NONE'} | pending=${info?.pending_update_count ?? 0} | lastError=${info?.last_error_message || 'none'}`);
+        } catch(e){ console.error('[TELEGRAM WEBHOOK] verify failed:',e.message); }
+      })
       .catch(e=>console.error('[TELEGRAM WEBHOOK] setup failed:',e.message));
+  } else if(process.env.RENDER) {
+    console.error('[TELEGRAM WEBHOOK] NOT CONFIGURED | missing APP_BASE_URL/RENDER_EXTERNAL_URL');
   }
 }
 
@@ -1630,4 +1641,9 @@ app.use((err,req,res,next)=>{
     console.log(`[AUTH] Loaded ${storedAuth.length} persisted password override(s)`);
   } catch (e) { console.error('[AUTH] Failed to load persisted credentials:', e.message); }
   setInterval(()=>storage.cleanup().catch(()=>{}), 6*60*60*1000);
-  app.listen(PORT,HOST,()=>{ console.log(`V TRADE AI v${APP_VERSION} Smart Entry PRO server listening on ${HOST}:${PORT}`); console.log(`[TELEGRAM] token=${TELEGRAM_TOKEN?'CONFIGURED':'MISSING'} | chatId=${TELEGRAM_CHAT_ID?'CONFIGURED':'MISSING'} | baseUrl=${TELEGRAM_WEBHOOK_BASE_URL||'MISSING'} | secret=${TELEGRAM_WEBHOOK_SECRET?'CONFIGURED':'OFF'}`); }); })();
+  app.listen(PORT,HOST,()=>{
+    console.log(`V TRADE AI v${APP_VERSION} Smart Entry PRO server listening on ${HOST}:${PORT}`);
+    console.log(`[TELEGRAM] token=${TELEGRAM_TOKEN?'CONFIGURED':'MISSING'} | chatId=${TELEGRAM_CHAT_ID?'CONFIGURED':'MISSING'} | baseUrl=${TELEGRAM_WEBHOOK_BASE_URL||'MISSING'} | secret=${TELEGRAM_WEBHOOK_SECRET?'CONFIGURED':'AUTO'}`);
+    if(!TELEGRAM_TOKEN) console.error('[TELEGRAM] BLOCKED | Set TELEGRAM_TOKEN (or TELEGRAM_BOT_TOKEN) in Render Environment. Bot commands/webhook cannot run without the token.');
+    else if(!TELEGRAM_CHAT_ID) console.warn('[TELEGRAM] ENV CHAT ID missing | Bot commands still work; auto alerts need TELEGRAM_CHAT_ID or a connected UI session.');
+  }); })();
