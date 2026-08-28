@@ -16,7 +16,7 @@ services:
       - key: NODE_VERSION
         value: "24.14.1"
       - key: APP_BASE_URL
-        value: https://vetven964.github.io
+        value: https://v-trade-ai.onrender.com
       - key: ADMIN_EMAIL
         sync: false
       - key: AUTH_SESSION_SECRET
@@ -26,7 +26,7 @@ services:
       - key: ADMIN_TOTP_SECRET
         sync: false
       - key: ALLOWED_ORIGINS
-        value: https://vetven964.github.io
+        value: https://vetven964.github.io,https://v-trade-ai.onrender.com
       - key: MT5_BRIDGE_API_KEY
         sync: false
       - key: MT5_SYMBOL

@@ -301,6 +301,9 @@ function normalizeOrigin(value) {
 const ALLOWED_ORIGINS = [...new Set([
   ...((process.env.ALLOWED_ORIGINS || '').split(',').map(normalizeOrigin).filter(Boolean)),
   normalizeOrigin(APP_BASE_URL),
+  // Canonical Render origin: keep login/auth usable even if the Render
+  // dashboard still has an older ALLOWED_ORIGINS value.
+  'https://v-trade-ai.onrender.com',
   'https://vetven964.github.io'
 ].filter(Boolean))];
 
@@ -393,6 +396,7 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false 
 if (process.env.RENDER && !ALLOWED_ORIGINS.length) {
   throw new Error('ALLOWED_ORIGINS must be configured in production');
 }
+console.log('[CORS] Allowed origins:', ALLOWED_ORIGINS.join(', '));
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '200kb' }));

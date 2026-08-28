@@ -10,3 +10,5 @@ Fixed:
 - Same-origin login API (avoids stale hard-coded backend URL)
 - Render APP_BASE_URL set to https://v-trade-ai.onrender.com
 - Kept MT5/Telegram engine unchanged
+
+CORS v2: hardcoded canonical Render origin https://v-trade-ai.onrender.com and startup allowlist log.
