@@ -1,54 +1,66 @@
-(function(){
-  const $ = id => document.getElementById(id);
-  const file = $('visionFile'), preview = $('visionPreview'), status = $('visionStatus');
-  const analyze = $('visionAnalyze'), output = $('visionOutput');
-
-  if(!file) return;
+'use strict';
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const input = $('visionImage');
+  const preview = $('visionPreview');
+  const result = $('visionResult');
+  const button = $('visionAnalyze');
+  if (!input || !preview || !result || !button) return;
 
   let dataUrl = '';
-  file.addEventListener('change', async () => {
-    const f = file.files && file.files[0];
-    if(!f) return;
-    if(!/^image\/(png|jpeg|webp)$/.test(f.type)) { status.textContent='PNG/JPEG/WebP only'; return; }
-    if(f.size > 6*1024*1024) { status.textContent='Maximum 6 MB'; return; }
-    dataUrl = await new Promise((resolve,reject)=>{
-      const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(f);
-    });
-    preview.src=dataUrl; preview.hidden=false; analyze.disabled=false;
-    status.textContent='Screenshot ready — press Analyze';
-    output.textContent='';
+  input.addEventListener('change', () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/i.test(file.type)) {
+      result.textContent = 'Only PNG, JPG or WebP is supported.';
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      result.textContent = 'Image must be 6 MB or smaller.';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      dataUrl = String(reader.result || '');
+      preview.src = dataUrl;
+      preview.hidden = false;
+      result.textContent = 'Screenshot ready. Click Analyze.';
+    };
+    reader.readAsDataURL(file);
   });
 
-  analyze.addEventListener('click', async()=>{
-    if(!dataUrl) return;
-    analyze.disabled=true; status.textContent='Analyzing locally with Qwen…';
-    output.textContent='';
-    try{
-      const r=await fetch('/api/v5/ai/vision/chart',{
-        method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+  button.addEventListener('click', async () => {
+    if (!dataUrl) { result.textContent = 'Upload a chart screenshot first.'; return; }
+    button.disabled = true;
+    result.textContent = 'Analyzing visible evidence…';
+    try {
+      const api = window.VTRADE_API_BASE || window.VTRADE_API || window.VTRADE_BACKEND || 'https://v-trade-ai.onrender.com';
+      const token = localStorage.getItem('vtrade_auth_token') || sessionStorage.getItem('vtrade_auth_token') || '';
+      const r = await fetch(`${api.replace(/\/$/,'')}/api/v5/ai/vision/chart`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json', ...(token ? {'x-vtrade-auth':token} : {})},
+        credentials:'omit',
         body:JSON.stringify({imageDataUrl:dataUrl})
       });
-      const j=await r.json();
-      if(!r.ok || !j.success) throw new Error(j.error || 'Vision analysis failed');
-      const a=j.analysis || {};
-      output.textContent =
-        `Symbol: ${a.symbol || 'UNKNOWN'}\n`+
-        `Timeframe: ${a.timeframe || 'UNKNOWN'}\n`+
-        `Visible Price: ${a.visiblePrice ?? 'UNKNOWN'}\n`+
-        `Trend: ${a.trend || 'UNKNOWN'}\n`+
-        `Liquidity Sweep: ${a.liquiditySweep || 'UNCLEAR'}\n`+
-        `MSS/BOS: ${a.mssBos || 'UNCLEAR'}\n`+
-        `FVG: ${a.fvg || 'UNCLEAR'}\n`+
-        `Order Block: ${a.orderBlock || 'UNCLEAR'}\n`+
-        `Confidence: ${a.confidence ?? 0}%\n\n`+
-        `Evidence:\n• ${(a.evidence||[]).join('\n• ') || 'None'}\n\n`+
-        `Blockers:\n• ${(a.blockers||[]).join('\n• ') || 'None'}\n\n`+
-        `Signal Gate: ${a.signal || 'WAIT'}\n`+
-        `Entry / SL / TP: controlled by V-ZONE ICT Engine`;
-      status.textContent='Done — evidence extracted locally';
-    }catch(e){
-      status.textContent='Vision error';
-      output.textContent=String(e.message||e);
-    }finally{ analyze.disabled=false; }
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || `HTTP ${r.status}`);
+      const a = d.analysis || {};
+      result.textContent =
+        `Symbol: ${a.symbol}\n` +
+        `Timeframe: ${a.timeframe}\n` +
+        `Visible price: ${a.visiblePrice ?? 'UNKNOWN'}\n` +
+        `Trend: ${a.trend}\n` +
+        `Liquidity: ${a.liquiditySweep}\n` +
+        `MSS/BOS: ${a.mssBos}\n` +
+        `FVG: ${a.fvg}\n` +
+        `Order Block: ${a.orderBlock}\n` +
+        `Confidence: ${a.confidence}%\n\n` +
+        `FINAL SIGNAL: WAIT\n` +
+        `Entry / SL / TP: NOT GENERATED`;
+    } catch(e) {
+      result.textContent = `Vision unavailable: ${e.message}`;
+    } finally {
+      button.disabled = false;
+    }
   });
 })();

@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const TelegramBot = require('node-telegram-bot-api');
+const { installVisionRoutes } = require('./ai-vision-chart-analyzer');
 const crypto = require('crypto');
 const storage = require('./storage');
 
@@ -330,8 +331,6 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50kb' }));
-const { installVisionRoutes } = require('./ai-vision-chart-analyzer');
-installVisionRoutes(app, requireAuth);
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false }));
 app.use('/api/', (req,res,next)=>{ const timer=setTimeout(()=>{ if(!res.headersSent) res.status(504).json({success:false,error:'API request timed out'}); }, ANALYSIS_REQUEST_TIMEOUT_MS); res.on('finish',()=>clearTimeout(timer)); res.on('close',()=>clearTimeout(timer)); next(); });
 const telegramMutationLimit = rateLimit({ windowMs: 10 * 60_000, max: 10, standardHeaders: true, legacyHeaders: false, message: { success:false, error:'Too many Telegram operations. Try again later.' } });
@@ -1643,6 +1642,7 @@ app.use((err,req,res,next)=>{
     console.log(`[AUTH] Loaded ${storedAuth.length} persisted password override(s)`);
   } catch (e) { console.error('[AUTH] Failed to load persisted credentials:', e.message); }
   setInterval(()=>storage.cleanup().catch(()=>{}), 6*60*60*1000);
+  installVisionRoutes(app, requireAuth);
   app.listen(PORT,HOST,()=>{
     console.log(`V TRADE AI v${APP_VERSION} Smart Entry PRO server listening on ${HOST}:${PORT}`);
     console.log(`[TELEGRAM] token=${TELEGRAM_TOKEN?'CONFIGURED':'MISSING'} | chatId=${TELEGRAM_CHAT_ID?'CONFIGURED':'MISSING'} | baseUrl=${TELEGRAM_WEBHOOK_BASE_URL||'MISSING'} | secret=${TELEGRAM_WEBHOOK_SECRET?'CONFIGURED':'AUTO'}`);
