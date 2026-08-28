@@ -66,7 +66,7 @@ const APP_VERSION = '7.3.1-FEED-STABLE';
 const EX_ZONE_LOW = Number(process.env.EX_ZONE_LOW || NaN);
 const EX_ZONE_HIGH = Number(process.env.EX_ZONE_HIGH || NaN);
 const ZONE_PROXIMITY_ATR = Math.max(0.25, Number(process.env.ZONE_PROXIMITY_ATR || 1.25));
-const ZONE_ALERT_ENABLED = String(process.env.ZONE_ALERT_ENABLED || 'true').toLowerCase() === 'true';
+const ZONE_ALERT_ENABLED = String(process.env.ZONE_ALERT_ENABLED || 'false').toLowerCase() === 'true';
 const APP_BASE_URL = (process.env.APP_BASE_URL || '').replace(/\/$/, '');
 const AUTH_SESSION_TTL_MS = Math.max(15 * 60 * 1000, Number(process.env.AUTH_SESSION_TTL_MS || 8 * 60 * 60 * 1000));
 const ANALYSIS_REQUEST_TIMEOUT_MS = Math.max(1500, Number(process.env.ANALYSIS_REQUEST_TIMEOUT_MS || 7000));
@@ -616,7 +616,7 @@ const NEWS_PRELOCK_MIN = Number(process.env.NEWS_PRELOCK_MIN || 15);
 const NEWS_CAUTION_MIN = Number(process.env.NEWS_CAUTION_MIN || 60);
 const NEWS_LIVE_WINDOW_MIN = Number(process.env.NEWS_LIVE_WINDOW_MIN || 2);
 const NEWS_POST_MIN = Number(process.env.NEWS_POST_MIN || 15);
-const TELEGRAM_NEWS_ALERTS = String(process.env.TELEGRAM_NEWS_ALERTS || 'true').toLowerCase() === 'true';
+const TELEGRAM_NEWS_ALERTS = String(process.env.TELEGRAM_NEWS_ALERTS || 'false').toLowerCase() === 'true';
 const MIN_CONFLUENCE = Math.max(65, Math.min(95, Number(process.env.MIN_CONFLUENCE || 76)));
 const MAX_ENTRY_SPREAD = Number(process.env.MAX_ENTRY_SPREAD || 1.50);
 const CORE_MTF_TFS = ['H4','H1','M15'];
@@ -2432,7 +2432,11 @@ if(bot){
       }
     }
   });
-  bot.onText(/^\/status$/,msg=>bot.sendMessage(msg.chat.id,'🟢 V TRADE AI online — MTF ICT engine active.'));
+  bot.onText(/^\/start$/,msg=>bot.sendMessage(msg.chat.id,'🤖 V TRADE AI Telegram Bot\n\n🟢 Auto Alert: ENTRY ONLY\n🔴 BUY/SELL: confirmed Entry Gate only\n🟡 WAIT: never broadcast as auto entry\n\nCommands: /help /price /signal /status /id'));
+  bot.onText(/^\/help$/,msg=>bot.sendMessage(msg.chat.id,'🤖 V TRADE AI — Telegram Commands\n\n/start — start bot\n/help — commands\n/price — live XAUUSD price\n/signal — current ICT signal\n/status — bot status\n/id — show Telegram chat ID\n\n🟢 Auto alerts are ENTRY ONLY.'));
+  bot.onText(/^\/id$/,msg=>bot.sendMessage(msg.chat.id,`🆔 Telegram Chat ID: ${msg.chat.id}`));
+  bot.onText(/^\/status$/,msg=>bot.sendMessage(msg.chat.id,'🟢 V TRADE AI online — MTF ICT engine active. Telegram Auto: ENTRY ONLY.'));
+
   if(process.env.RENDER && APP_BASE_URL && TELEGRAM_WEBHOOK_SECRET){
     bot.setWebHook(`${APP_BASE_URL}/telegram/webhook`,{secret_token:TELEGRAM_WEBHOOK_SECRET})
       .catch(e=>console.error('Webhook setup:',e.message));

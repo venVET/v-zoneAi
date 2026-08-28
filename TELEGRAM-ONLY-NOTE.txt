@@ -1,0 +1,1 @@
+V TRADE AI Telegram-only update. UI files are preserved; Telegram auto alerts are ENTRY ONLY. WAIT/news/zone auto broadcasts are disabled by default. Commands: /start /help /price /signal /status /id.
