@@ -565,6 +565,10 @@ app.post('/api/admin/pricing', requireAuth, requireRole('admin'), (req,res) => {
 
 app.use(express.static(path.join(__dirname)));
 
+// Canonical UI entrypoint: serve the premium dashboard at the root URL.
+// Keep /v-zone-ai/ as a backwards-compatible alias.
+app.get('/', (_req,res)=>res.sendFile(path.join(__dirname,'premium-dashboard-live.html')));
+
 // V-ZONE AI CLEAN ROUTES — single canonical MT5/Telegram bridge.
 app.get('/v-zone-ai/', (_req,res)=>res.sendFile(path.join(__dirname,'premium-dashboard-live.html')));
 app.get('/api/pre-market/mt5-authoritative', async (_req,res)=>{
