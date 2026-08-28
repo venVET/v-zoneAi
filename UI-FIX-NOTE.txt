@@ -12,3 +12,6 @@ Fixed:
 - Kept MT5/Telegram engine unchanged
 
 CORS v2: hardcoded canonical Render origin https://v-trade-ai.onrender.com and startup allowlist log.
+
+- Added admin-dashboard.html because login previously redirected to a missing route and Render returned Cannot GET /admin-dashboard.html.
+- Added profile.html and dashboard-ui-fix.js for referenced UI routes.
