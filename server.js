@@ -328,8 +328,10 @@ if (process.env.RENDER && !ALLOWED_ORIGINS.length) {
 }
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-app.use(express.json({ limit: '200kb' }));
+app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50kb' }));
+const { installVisionRoutes } = require('./ai-vision-chart-analyzer');
+installVisionRoutes(app, requireAuth);
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false }));
 app.use('/api/', (req,res,next)=>{ const timer=setTimeout(()=>{ if(!res.headersSent) res.status(504).json({success:false,error:'API request timed out'}); }, ANALYSIS_REQUEST_TIMEOUT_MS); res.on('finish',()=>clearTimeout(timer)); res.on('close',()=>clearTimeout(timer)); next(); });
 const telegramMutationLimit = rateLimit({ windowMs: 10 * 60_000, max: 10, standardHeaders: true, legacyHeaders: false, message: { success:false, error:'Too many Telegram operations. Try again later.' } });

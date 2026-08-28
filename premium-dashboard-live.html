@@ -118,7 +118,21 @@ body{background:radial-gradient(circle at 12% 0,#073326 0,transparent 28%),radia
   </div></section>
 
   <section class="section" id="terminal"><div class="section-title"><h2 data-i18n="MTF Direction Radar">MTF Direction Radar</h2><span>LIVE ENGINE DATA · 2/3 REQUIRED</span></div><div class="grid radar" id="radar"></div><div class="align"><span data-i18n="Core alignment">Core alignment</span><b id="alignText" class="cyan">—</b></div></section>
-  <section class="section" id="ai"><div class="section-title"><h2 data-i18n="ICT Entry Gate">ICT Entry Gate</h2><span id="gateSummary">Waiting for analysis…</span></div><div class="grid gategrid" id="gates"></div></section>
+  
+<section class="section" id="vision">
+  <div class="section-title"><h2>📷 AI Screenshot Vision</h2><span id="visionStatus">Local Qwen · Evidence Only</span></div>
+  <div class="card">
+    <div style="display:grid;gap:12px">
+      <input id="visionFile" type="file" accept="image/png,image/jpeg,image/webp">
+      <img id="visionPreview" alt="Chart preview" hidden style="max-width:100%;max-height:420px;border-radius:12px;object-fit:contain">
+      <button id="visionAnalyze" type="button" disabled>Analyze Screenshot</button>
+      <pre id="visionOutput" style="white-space:pre-wrap;margin:0;min-height:80px"></pre>
+      <small>Qwen only extracts visible evidence. BUY/SELL, Entry, SL and TP remain locked to the V-ZONE ICT engine.</small>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="ai"><div class="section-title"><h2 data-i18n="ICT Entry Gate">ICT Entry Gate</h2><span id="gateSummary">Waiting for analysis…</span></div><div class="grid gategrid" id="gates"></div></section>
   <section class="section grid mainrow" id="signals"><div class="card"><div class="section-title"><h2 data-i18n="Live Signal Authorization">Live Signal Authorization</h2><span id="auth">WAIT</span></div><div class="signal"><div><div class="signal-state" id="bigSignal">🟡 WAIT</div><div class="sub" id="trigger">No confirmed execution setup</div></div><div class="huge" id="dirBig">—</div></div><div class="setup"><div class="label" data-i18n="Entry Plan">Entry Plan</div><div class="levels"><div class="level"><span data-i18n="Entry Zone">Entry Zone</span><b id="entry">—</b></div><div class="level"><span data-i18n="Stop Loss">Stop Loss</span><b class="red" id="sl">—</b></div><div class="level"><span>TP1</span><b class="green" id="tp1">—</b></div><div class="level"><span>TP2</span><b class="green" id="tp2">—</b></div><div class="level"><span>TP3</span><b class="green" id="tp3">—</b></div><div class="level"><span data-i18n="Execution TF">Execution TF</span><b id="execTf">—</b></div></div></div></div>
   <div class="card"><div class="section-title"><h2 data-i18n="Live Price">Live Price</h2><span id="lastUpdate">—</span></div><div class="chart" id="chart"><div class="empty">Waiting for live M15 candles…</div></div><div class="footerline"><span id="symbol">XAUUSD</span><span id="priceAsOf">—</span></div></div></section>
 
@@ -173,5 +187,5 @@ document.querySelectorAll('.news-filter button').forEach(b=>b.onclick=()=>{docum
 $('refresh').onclick=()=>{load();fetchHeadlines();showToast(lang==='km'?'កំពុង Refresh ទិន្នន័យ…':'Refreshing live data…')};$('api').addEventListener('change',load);document.querySelectorAll('.tfs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tfs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');showToast(`${b.textContent} selected`)});
 applyLang();load();fetchHeadlines();setInterval(load,5000);setInterval(fetchHeadlines,60000);setInterval(loadCalendar,15000);setInterval(()=>{if(lastNews)renderCalendar(lastNews)},1000);
 </script>
-<script src="site-connection.js"></script></body>
+<script src="site-connection.js"></script><script src="ai-vision-upload.js"></script></body>
 </html>
