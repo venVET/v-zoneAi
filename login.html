@@ -47,8 +47,8 @@ body{display:grid;place-items:center;padding:12px}
 <div class="links"><a href="index.html">← Home</a><a href="register.html">Create account</a><a href="reset-password.html">Forgot password?</a></div>
 </main>
 <script>
-const API=window.location.origin;
-const ROUTE_VERSION='20260821-route-v3';
+const API=(location.hostname.endsWith('.github.io') ? 'https://v-trade-ai.onrender.com' : location.origin);
+const ROUTE_VERSION='20260828-route-v4';
 const $=id=>document.getElementById(id);
 let role='user',challenge='';
 function setRole(r){role=r;$('userMode').classList.toggle('active',r==='user');$('adminMode').classList.toggle('active',r==='admin');$('submit').textContent=r==='admin'?'👑 Sign in as Admin':'🔐 Sign in as User';}
