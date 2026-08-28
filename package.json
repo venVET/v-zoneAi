@@ -1,10 +1,10 @@
 {
-  "name": "v-trade-ai-advanced",
-  "version": "7.3.1",
-  "description": "V Trade AI XAUUSD MTF ICT + MT5 feed + Telegram alerts + optional local auto-trade",
+  "name": "v-zone-ai",
+  "version": "1.0.0",
+  "description": "V-Zone AI Smart Trading Terminal \u2014 XAUUSD MTF ICT + MT5 + Telegram",
   "main": "server.js",
   "scripts": {
-    "start": "node vtrade-enhanced-launcher.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

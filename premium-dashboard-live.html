@@ -15,7 +15,66 @@
   <script src="vtrade-connection.js?v=20260821-auth-fix"></script>
   <script src="terminal-pre-market.js"></script>
   <script src="vtrade-rbac-guard.js?v=20260821-auth-fix"></script>
-<link rel="stylesheet" href="vtrade-responsive.css?v=20260821-fluid"><script defer src="vtrade-responsive.js?v=20260821-fluid"></script></head>
+<link rel="stylesheet" href="vtrade-responsive.css?v=20260821-fluid"><script defer src="vtrade-responsive.js?v=20260821-fluid"></script>
+<style id="vzone-new-ui">
+:root{
+ --bg:#050b12;--panel:#0a131d;--panel2:#0d1824;--line:#1a2a3a;
+ --text:#f3f7fb;--muted:#8190a4;--green:#19e57b;--red:#ff4d5d;
+ --cyan:#28d8ff;--gold:#f0c84b;--shadow:0 18px 50px rgba(0,0,0,.28)
+}
+body{background:radial-gradient(circle at 12% 0,#073326 0,transparent 28%),radial-gradient(circle at 90% 0,#092a34 0,transparent 24%),var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif}
+.app{grid-template-columns:210px minmax(0,1fr)}
+.side{padding:14px 10px;background:rgba(4,10,16,.94);border-right:1px solid var(--line)}
+.brand{margin:3px 8px 20px}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#13c967,#19e57b);color:#06120b;box-shadow:none;font-size:22px}
+.brand b{font-size:16px}.brand small{font-size:10px}
+.nav{gap:4px}.nav button{min-height:43px;padding:10px 11px;border-radius:10px;font-size:12px}
+.nav button:hover,.nav button.active{background:linear-gradient(90deg,#0c3829,#102019);border-color:#155e3b;color:#fff}
+.side-foot{padding:10px;border-radius:10px;background:#08111a;border-color:#193047}
+.top{min-height:70px;padding:10px 16px;background:rgba(5,11,18,.92);border-bottom:1px solid var(--line)}
+.pair{padding:8px 11px;border:1px solid #1b2c3d;border-radius:10px;background:#0a151f}
+.star{color:#f1c84a}.price{font-size:24px}.backend{background:#062b20;border-color:#11643d}
+.tfs{margin-left:auto}.tfs button,.lang-btn{min-width:42px;min-height:38px;padding:8px 10px;border-radius:9px;background:#0a141e}
+.tfs button.active,.lang-btn.active{background:#126a3d;border-color:#18a85f}
+.wrap{padding:14px 16px 28px}
+#backendConnection{display:none!important}
+.section{margin-top:12px}
+.cards{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.card{background:linear-gradient(180deg,#0c1722,#09131d);border:1px solid #1a2c3d;border-radius:13px;box-shadow:var(--shadow);padding:14px}
+.label{font-size:10px;letter-spacing:.04em;color:#7f91a6;text-transform:uppercase}
+.signal-state{font-weight:900;font-size:25px;margin:7px 0 2px}
+.huge{font-size:28px;font-weight:900}.big{font-size:22px;font-weight:900;margin:7px 0 2px}
+.section-title{margin-bottom:8px}.section-title h2{font-size:14px;margin:0}.section-title span{font-size:9px;color:#68798e}
+#terminal{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:12px;align-items:start}
+#terminal .section-title{grid-column:1/-1}
+.radar{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.radar .card{padding:11px}
+.mainrow{grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr)!important;gap:12px}
+#chart{height:330px;border:1px solid #1a2c3d;border-radius:12px;background:linear-gradient(180deg,#08131d,#061019);overflow:hidden}
+#chart svg{width:100%;height:100%}
+.levels{gap:8px}.levels>div{background:#08131d;border:1px solid #1b3041;border-radius:9px;padding:10px}
+#signals .card,#ai .card,#news .card,#telegram .card,#risk .card,#history .card,#settings .card{box-shadow:var(--shadow)}
+.kv{border-color:#1a2a39}
+.bar{background:#132232}
+.green{color:var(--green)!important}.red{color:var(--red)!important}.cyan{color:var(--cyan)!important}
+@media(max-width:1100px){.app{grid-template-columns:190px 1fr}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.radar{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){
+ .app{display:block}.side{display:none}.top{position:sticky;top:0;z-index:100;padding:9px 10px;gap:7px}
+ .mobile{display:grid!important;place-items:center;width:40px;height:40px;border:1px solid #1a2d3e;border-radius:10px;background:#0b1722}
+ .pair{flex:1;min-width:125px}.price{font-size:20px}.backend{display:none}.lang-row{display:none}.tfs{order:10;width:100%;margin:0;display:grid;grid-template-columns:repeat(5,1fr)}
+ .tfs button{min-height:36px}
+ .wrap{padding:10px 10px 76px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #terminal{display:block}.radar{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:8px}
+ .mainrow{grid-template-columns:1fr!important}.section-title h2{font-size:13px}
+ #chart{height:250px}.card{padding:11px}.huge{font-size:24px}
+}
+@media(max-width:520px){
+ .cards{grid-template-columns:1fr 1fr}.cards .card:first-child{grid-column:1/-1}
+ .signal-state{font-size:22px}.pair small{font-size:9px}.pair b{font-size:12px}
+ .radar{grid-template-columns:1fr 1fr}.levels{grid-template-columns:1fr 1fr!important}
+ #chart{height:220px}
+}
+</style>
+</head>
 <body>
 <div class="scrim" id="scrim"></div>
 <div class="app">
