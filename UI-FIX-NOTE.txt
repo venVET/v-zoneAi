@@ -1,0 +1,12 @@
+V-TRADE AI UI FIX — 2026-08-28
+
+Fixed:
+- Explicit Render route for /
+- /index.html -> /
+- /login.html
+- /premium-dashboard-live.html
+- /v-zone-ai and /v-zone-ai/
+- Added login.html to the deployment package
+- Same-origin login API (avoids stale hard-coded backend URL)
+- Render APP_BASE_URL set to https://v-trade-ai.onrender.com
+- Kept MT5/Telegram engine unchanged
