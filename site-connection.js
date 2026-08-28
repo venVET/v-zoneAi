@@ -1,6 +1,6 @@
 /* V TRADE AI — unified website connection/auth layer */
 (function(){
-  const API=(window.VTRADE_API_BASE||'https://forexai-6xw6.onrender.com').replace(/\/$/,'');
+  const API=(window.VTRADE_API_BASE||'https://v-trade-ai.onrender.com').replace(/\/$/,'');
   const TOKEN_KEY='vtrade_auth_token',LEGACY_KEY='vtrade_auth';
   const token=()=>sessionStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(LEGACY_KEY)||localStorage.getItem(TOKEN_KEY)||localStorage.getItem(LEGACY_KEY)||'';
   const publicPaths=['/api/auth/login','/api/auth/2fa/verify','/api/auth/register','/api/auth/forgot-password','/api/auth/health','/api/public/pricing','/api/pricing','/health','/api/health'];

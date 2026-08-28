@@ -3,7 +3,7 @@
   'use strict';
   if (window.__VTRADE_RBAC_GUARD__) return;
   window.__VTRADE_RBAC_GUARD__ = true;
-  const BACKEND='https://forexai-6xw6.onrender.com';
+  const BACKEND='https://v-trade-ai.onrender.com';
   const file=String(location.pathname.split('/').pop()||'').toLowerCase();
   const isAdminPage=file==='admin-dashboard.html', isTerminalPage=file==='premium-dashboard-live.html';
   if(!isAdminPage&&!isTerminalPage)return;

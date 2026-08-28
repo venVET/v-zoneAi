@@ -2,7 +2,7 @@
 (() => {
   if (window.VTRADE_CONNECTION) return;
 
-  const BACKEND = 'https://forexai-6xw6.onrender.com';
+  const BACKEND = 'https://v-trade-ai.onrender.com';
   const AUTH_KEY = 'vtrade_auth_token';
   const LEGACY_AUTH_KEY = 'vtrade_auth';
   const USER_DASHBOARD = 'premium-dashboard-live.html?v=20260819-user-dashboard';
