@@ -18,10 +18,11 @@ const HOST = '0.0.0.0';
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+const TELEGRAM_WEBHOOK_BASE_URL = (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 const TELEGRAM_WEBHOOK_SECRET_EFFECTIVE = TELEGRAM_WEBHOOK_SECRET || crypto.randomBytes(32).toString('hex');
 const MT5_BRIDGE_API_KEY = process.env.MT5_BRIDGE_API_KEY || '';
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
-const REQUIRE_WEBHOOK_SECRET = String(process.env.REQUIRE_WEBHOOK_SECRET || (process.env.RENDER ? 'true' : 'false')).toLowerCase() === 'true';
+const REQUIRE_WEBHOOK_SECRET = String(process.env.REQUIRE_WEBHOOK_SECRET || 'false').toLowerCase() === 'true';
 const TELEGRAM_SESSION_TTL_MS = Math.max(5 * 60 * 1000, Number(process.env.TELEGRAM_SESSION_TTL_MS || 24 * 60 * 60 * 1000));
 const MT5_MAX_AGE_MS = Number(process.env.MT5_MAX_AGE_MS || 15000);
 const APP_VERSION = '7.3.2-TELEGRAM-FIX';
@@ -1539,7 +1540,7 @@ app.post('/telegram/webhook',async(req,res)=>{
   if(REQUIRE_WEBHOOK_SECRET && !TELEGRAM_WEBHOOK_SECRET_EFFECTIVE) return res.sendStatus(503);
   if(TELEGRAM_WEBHOOK_SECRET_EFFECTIVE && !safeEqual(req.get('x-telegram-bot-api-secret-token'),TELEGRAM_WEBHOOK_SECRET_EFFECTIVE)) return res.sendStatus(401);
 
-  try { await bot.processUpdate(req.body); } catch(e){ console.error(e.message); }
+  try { await bot.processUpdate(req.body); console.log(`[TELEGRAM WEBHOOK] update processed | text=${req.body?.message?.text || 'unknown'}`); } catch(e){ console.error('[TELEGRAM WEBHOOK] process error:',e.message); }
   res.sendStatus(200);
 });
 
@@ -1629,4 +1630,4 @@ app.use((err,req,res,next)=>{
     console.log(`[AUTH] Loaded ${storedAuth.length} persisted password override(s)`);
   } catch (e) { console.error('[AUTH] Failed to load persisted credentials:', e.message); }
   setInterval(()=>storage.cleanup().catch(()=>{}), 6*60*60*1000);
-  app.listen(PORT,HOST,()=>console.log(`V TRADE AI v${APP_VERSION} Smart Entry PRO server listening on ${HOST}:${PORT}`)); })();
+  app.listen(PORT,HOST,()=>{ console.log(`V TRADE AI v${APP_VERSION} Smart Entry PRO server listening on ${HOST}:${PORT}`); console.log(`[TELEGRAM] token=${TELEGRAM_TOKEN?'CONFIGURED':'MISSING'} | chatId=${TELEGRAM_CHAT_ID?'CONFIGURED':'MISSING'} | baseUrl=${TELEGRAM_WEBHOOK_BASE_URL||'MISSING'} | secret=${TELEGRAM_WEBHOOK_SECRET?'CONFIGURED':'OFF'}`); }); })();
