@@ -1,93 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-store">
 <title>V TRADE AI — Admin Dashboard</title>
-<link rel="stylesheet" href="vtrade-responsive.css?v=20260828-admin-fix">
-<style>
-:root{--bg:#04070d;--panel:#07101c;--panel2:#0b1423;--line:#233552;--text:#f5f8ff;--muted:#8d9bb0;--v:#7136e8;--g:#22e58a;--r:#ff5968;--c:#35d8ff}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 10% 0,#281450,transparent 32%),radial-gradient(circle at 90% 5%,#073c43,transparent 30%),var(--bg);color:var(--text);font:14px "Noto Sans Khmer","Segoe UI",Arial,sans-serif}
-body{min-height:100dvh}.wrap{width:min(1500px,100%);margin:auto;padding:24px}.top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;font-size:25px;font-weight:950;background:linear-gradient(135deg,#5120ff,#aa72ff)}h1{margin:0;font-size:23px}.sub{color:var(--muted);font-size:11px;margin-top:3px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--panel2);color:#fff;border-radius:11px;padding:11px 14px;font-weight:800;cursor:pointer;text-decoration:none}.btn.primary{background:linear-gradient(135deg,#5421cf,#7136e8);border-color:#8050ff}.btn.danger{color:#ff9aa5;border-color:#7c2532;background:#2b0c13}.status{padding:10px 12px;border:1px solid #147850;background:#062d20;color:#9fffd0;border-radius:11px;font-size:11px;margin-bottom:14px}.status.bad{border-color:#7c2532;background:#2b0c13;color:#ff9aa5}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{background:#07101cf5;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 15px 45px #0007}.metric b{display:block;font-size:26px;margin-top:8px}.label{color:var(--muted);font-size:11px}.section{margin-top:14px}.section h2{font-size:15px;margin:0 0 10px}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:650px}.table th,.table td{padding:10px;border-bottom:1px solid #17253a;text-align:left;font-size:11px}.table th{color:#9daec6;font-size:10px;text-transform:uppercase}.pill{display:inline-flex;padding:4px 7px;border-radius:999px;border:1px solid #2c4669;font-size:9px}.pill.ok{border-color:#147850;background:#062d20;color:#9fffd0}.pill.admin{border-color:#8050ff;background:#28105e;color:#d8c8ff}.links{display:flex;gap:8px;flex-wrap:wrap}.empty{color:var(--muted);padding:12px 0;font-size:12px}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-@media(max-width:900px){.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.actions{width:100%}.actions .btn{flex:1}.card{padding:13px}}
-@media(max-width:600px){.grid{grid-template-columns:1fr}.actions{display:grid;grid-template-columns:1fr 1fr}.actions .btn{width:100%}h1{font-size:19px}}
-</style>
-</head>
-<body>
-<main class="wrap">
-<header class="top">
-  <div class="brand"><div class="logo">V</div><div><h1>V TRADE AI — Admin</h1><div class="sub" id="adminIdentity">Checking authenticated administrator…</div></div></div>
-  <div class="actions">
-    <a class="btn primary" href="premium-dashboard-live.html?from=admin-terminal&v=20260828-admin-fix">▣ Live Terminal</a>
-    <button class="btn" id="refresh" type="button">↻ Refresh</button>
-    <button class="btn danger" id="logout" type="button">↪ Sign out</button>
-  </div>
-</header>
-<div id="status" class="status">Connecting to Render backend…</div>
-<section class="grid">
-  <div class="card metric"><div class="label">System</div><b id="systemState">—</b></div>
-  <div class="card metric"><div class="label">Active Sessions</div><b id="sessionCount">—</b></div>
-  <div class="card metric"><div class="label">Users</div><b id="userCount">—</b></div>
-  <div class="card metric"><div class="label">MT5 Feed</div><b id="feedState">—</b></div>
-</section>
-<section class="section card">
-  <h2>Quick Links</h2>
-  <div class="links">
-    <a class="btn" href="premium-dashboard-live.html?from=admin-terminal">Live Terminal</a>
-    <a class="btn" href="premium-dashboard-live.html?from=admin-terminal#signals">Signals</a>
-    <a class="btn" href="premium-dashboard-live.html?from=admin-terminal#ai">AI Analysis</a>
-    <a class="btn" href="login.html">Login</a>
-  </div>
-</section>
-<section class="section card">
-  <h2>Users</h2><div id="users" class="table-wrap"><div class="empty">Loading users…</div></div>
-</section>
-<section class="section card">
-  <h2>Active Sessions</h2><div id="sessions" class="table-wrap"><div class="empty">Loading sessions…</div></div>
-</section>
-<section class="section card">
-  <h2>Backend / MT5</h2><div id="backendDetails" class="empty">Loading status…</div>
-</section>
-</main>
-<script src="vtrade-connection.js?v=20260828-admin-fix"></script>
-<script src="vtrade-rbac-guard.js?v=20260828-admin-fix"></script>
-<script src="vtrade-responsive.js?v=20260828-admin-fix"></script>
-<script>
-'use strict';
-const API='https://v-trade-ai.onrender.com';
-const token=()=>sessionStorage.getItem('vtrade_auth_token')||sessionStorage.getItem('vtrade_auth')||localStorage.getItem('vtrade_auth_token')||localStorage.getItem('vtrade_auth')||'';
-const headers=()=>({Accept:'application/json','x-vtrade-auth':token()});
-const $=id=>document.getElementById(id);
-async function get(path){
-  const r=await fetch(API+path,{cache:'no-store',credentials:'omit',headers:headers()});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error||('HTTP '+r.status));
-  return d;
-}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function fmt(t){return t?new Date(t).toLocaleString():'—'}
-function showError(e){$('status').textContent='● '+(e?.message||'Admin API unavailable');$('status').classList.add('bad')}
-async function load(){
-  try{
-    const [session,users,health]=await Promise.all([get('/api/admin/session'),get('/api/admin/users'),get('/api/health')]);
-    if(String(session.admin?.role||'').toLowerCase()!=='admin') throw new Error('Administrator role required.');
-    const u=session.admin||{};
-    $('adminIdentity').textContent=(u.name||u.email||'Administrator')+' · '+(u.email||'');
-    $('status').textContent='● Render backend connected · Administrator session verified';
-    $('status').classList.remove('bad');
-    $('systemState').textContent=health?.success?'ONLINE':'CHECK';
-    $('sessionCount').textContent=String(session.sessionCount??0);
-    $('userCount').textContent=String((users.users||[]).length);
-    $('feedState').textContent=health?.success?'ONLINE':'CHECK';
-    $('users').innerHTML=(users.users||[]).length?`<table class="table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Plan</th><th>Enabled</th></tr></thead><tbody>${users.users.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td><span class="pill ${x.role==='admin'?'admin':''}">${esc(x.role)}</span></td><td>${esc(x.plan)}</td><td><span class="pill ${x.enabled?'ok':''}">${x.enabled?'YES':'NO'}</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No users found.</div>';
-    $('sessions').innerHTML=(session.sessions||[]).length?`<table class="table"><thead><tr><th>User</th><th>Role</th><th>Plan</th><th>Created</th><th>Expires</th><th>Session</th></tr></thead><tbody>${session.sessions.map(x=>`<tr><td>${esc(x.email)}</td><td>${esc(x.role)}</td><td>${esc(x.plan)}</td><td>${fmt(x.createdAt)}</td><td>${fmt(x.expiresAt)}</td><td class="mono">${esc(x.sessionId)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No active sessions.</div>';
-    $('backendDetails').innerHTML=`API: <span class="mono">${esc(API)}</span><br>Health: ${health?.success?'OK':'CHECK'}<br>Admin capabilities: ${(session.capabilities||[]).map(esc).join(' · ')}`;
-  }catch(e){showError(e); if(/401|403|administrator|session/i.test(e.message||'')){setTimeout(()=>location.replace('login.html?required=login&reason=session_expired'),700);}}
-}
-$('refresh').onclick=load;
-$('logout').onclick=async()=>{try{await fetch(API+'/api/auth/logout',{method:'POST',credentials:'omit',headers:headers()})}catch{};try{sessionStorage.clear();localStorage.removeItem('vtrade_auth_token');localStorage.removeItem('vtrade_auth');localStorage.removeItem('vtrade_user')}catch{}location.replace('login.html?logged_out=1')};
-load();setInterval(load,15000);
-</script>
-</body>
-</html>
+<style>body{margin:0;background:#04070d;color:#f5f8ff;font:16px Arial,sans-serif;display:grid;place-items:center;min-height:100vh}.box{padding:28px;border:1px solid #233552;border-radius:20px;background:#07101c;text-align:center}a{color:#35d8ff}</style>
+<script>location.replace('/premium-dashboard-live.html?v=20260828-ui-route');</script>
+</head><body><div class="box"><h2>V TRADE AI</h2><p>Opening Admin Dashboard…</p><p><a href="/premium-dashboard-live.html">Continue</a></p></div></body></html>
