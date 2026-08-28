@@ -18,12 +18,13 @@ const HOST = '0.0.0.0';
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+const TELEGRAM_WEBHOOK_SECRET_EFFECTIVE = TELEGRAM_WEBHOOK_SECRET || crypto.randomBytes(32).toString('hex');
 const MT5_BRIDGE_API_KEY = process.env.MT5_BRIDGE_API_KEY || '';
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 const REQUIRE_WEBHOOK_SECRET = String(process.env.REQUIRE_WEBHOOK_SECRET || (process.env.RENDER ? 'true' : 'false')).toLowerCase() === 'true';
 const TELEGRAM_SESSION_TTL_MS = Math.max(5 * 60 * 1000, Number(process.env.TELEGRAM_SESSION_TTL_MS || 24 * 60 * 60 * 1000));
 const MT5_MAX_AGE_MS = Number(process.env.MT5_MAX_AGE_MS || 15000);
-const APP_VERSION = '6.3.5';
+const APP_VERSION = '7.3.2-TELEGRAM-FIX';
 const APP_BASE_URL = (process.env.APP_BASE_URL || '').replace(/\/$/, '');
 const AUTH_SESSION_TTL_MS = Math.max(15 * 60 * 1000, Number(process.env.AUTH_SESSION_TTL_MS || 8 * 60 * 60 * 1000));
 const ANALYSIS_REQUEST_TIMEOUT_MS = Math.max(1500, Number(process.env.ANALYSIS_REQUEST_TIMEOUT_MS || 7000));
@@ -478,32 +479,6 @@ app.post('/api/admin/pricing', requireAuth, requireRole('admin'), (req,res) => {
   pricingPlans.splice(0, pricingPlans.length, ...plans.map(p=>({id:String(p.id),name:String(p.name).slice(0,80),price:Number(p.price),period:String(p.period||'month').slice(0,30),enabled:p.enabled!==false,features:Array.isArray(p.features)?p.features.slice(0,20).map(x=>String(x).slice(0,100)):[]})));
   storage.saveEvent?.('pricing_update', null, {admin:req.vtradeUser.email,plans:pricingPlans}).catch(()=>{});
   res.json({success:true,plans:pricingPlans});
-});
-
-// V-TRADE ROUTE HOTFIX — prevent redirect loops on mobile/desktop.
-// Canonical app entry points are handled BEFORE express.static so legacy
-// redirect HTML files cannot hijack navigation.
-const VTRADE_UI_LOGIN = '/login.html?v=20260828-route-v4';
-const VTRADE_UI_USER = '/premium-dashboard-live.html?v=20260828-route-v4';
-const VTRADE_UI_ADMIN = '/admin-dashboard.html?v=20260828-route-v4';
-function validBrowserSession(req) {
-  try {
-    const token = authTokenFrom(req);
-    if (!token || revokedAuthTokens.has(token)) return null;
-    const session = authSessions.get(token);
-    if (!session || !session.expiresAt || Date.now() >= session.expiresAt) return null;
-    return session;
-  } catch (_) { return null; }
-}
-app.get(['/', '/v-zone-ai', '/vtrade-new', '/dashboard-new'], (req, res) => {
-  const session = validBrowserSession(req);
-  const target = session
-    ? ((String(session.role || '').toLowerCase() === 'admin') ? VTRADE_UI_ADMIN : VTRADE_UI_USER)
-    : VTRADE_UI_LOGIN;
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  return res.redirect(302, target);
 });
 
 app.use(express.static(path.join(__dirname)));
@@ -1561,8 +1536,8 @@ app.post('/api/v5/signal',telegramMutationLimit,async(req,res)=>{
 
 app.post('/telegram/webhook',async(req,res)=>{
   if(!bot) return res.sendStatus(503);
-  if(REQUIRE_WEBHOOK_SECRET && !TELEGRAM_WEBHOOK_SECRET) return res.sendStatus(503);
-  if(TELEGRAM_WEBHOOK_SECRET && !safeEqual(req.get('x-telegram-bot-api-secret-token'),TELEGRAM_WEBHOOK_SECRET)) return res.sendStatus(401);
+  if(REQUIRE_WEBHOOK_SECRET && !TELEGRAM_WEBHOOK_SECRET_EFFECTIVE) return res.sendStatus(503);
+  if(TELEGRAM_WEBHOOK_SECRET_EFFECTIVE && !safeEqual(req.get('x-telegram-bot-api-secret-token'),TELEGRAM_WEBHOOK_SECRET_EFFECTIVE)) return res.sendStatus(401);
 
   try { await bot.processUpdate(req.body); } catch(e){ console.error(e.message); }
   res.sendStatus(200);
@@ -1571,23 +1546,70 @@ app.post('/telegram/webhook',async(req,res)=>{
 setInterval(()=>{ const now=Date.now(); for (const [token,session] of authSessions) { if (!session.expiresAt || now>=session.expiresAt) authSessions.delete(token); } for (const [token,expiresAt] of revokedAuthTokens) { if (now>=expiresAt) revokedAuthTokens.delete(token); } for (const [sid,session] of telegramSessions) { if (!session.expiresAt || now>=session.expiresAt) { telegramSessions.delete(sid); telegramAlertKeys.delete(sid); telegramNewsKeys.delete(sid); } } }, 10*60*1000);
 
 if(bot){
-  bot.onText(/^\/price$/,async msg=>{
+  bot.onText(/^\/start(?:@\w+)?$/,async msg=>{
+    await bot.sendMessage(msg.chat.id,
+      '🤖 V TRADE AI — XAUUSD\n\n' +
+      '🟢 Bot online.\n' +
+      'Use /help for commands.\n\n' +
+      'MT5 broker-native feed is used for price and ICT analysis.');
+  });
+
+  bot.onText(/^\/help(?:@\w+)?$/,async msg=>{
+    await bot.sendMessage(msg.chat.id,
+      '📋 V TRADE AI Commands\n\n' +
+      '/price — XAUUSD live Bid/Ask\n' +
+      '/signal — current ICT signal/status\n' +
+      '/status — bot + engine status\n' +
+      '/id — show this Telegram Chat ID\n' +
+      '/help — show commands');
+  });
+
+  bot.onText(/^\/id(?:@\w+)?$/,async msg=>{
+    await bot.sendMessage(msg.chat.id,`🆔 Chat ID: ${msg.chat.id}`);
+  });
+
+  bot.onText(/^\/price(?:@\w+)?$/,async msg=>{
     try {
       const p=brokerLivePrice();
       if (!p) throw new Error('VT Markets MT5 feed unavailable or stale');
       await bot.sendMessage(msg.chat.id,`💰 XAUUSD live: ${p.price.toFixed(2)}\nBid: ${p.bid.toFixed(2)} | Ask: ${p.ask.toFixed(2)}\nSource: VT Markets MT5 | Age: ${p.ageSec}s`);
-    } catch(_) {
-      await bot.sendMessage(msg.chat.id,'⚠️ XAUUSD MT5 feed unavailable/stale.');
+    } catch(e) {
+      await bot.sendMessage(msg.chat.id,`⚠️ XAUUSD MT5 feed unavailable/stale. ${e?.message || ''}`.trim());
     }
   });
-  bot.onText(/^\/signal$/,async msg=>{
-    try { const a=await buildXauAnalysis(); await bot.sendMessage(msg.chat.id,telegramText(a)); }
-    catch(_){ await bot.sendMessage(msg.chat.id,'⚠️ ICT analysis unavailable.'); }
+
+  bot.onText(/^\/signal(?:@\w+)?$/,async msg=>{
+    try {
+      const a=await buildXauAnalysis();
+      const actionable=['BUY','SELL'].includes(a.signal) && a.status==='ENTRY CONFIRMED' && Number.isFinite(Number(a.entry));
+      if(actionable) {
+        await bot.sendMessage(msg.chat.id,telegramText(a),{parse_mode:'Markdown'});
+      } else {
+        const blockers=Array.isArray(a?.decision?.evidenceSummary?.waiting) ? a.decision.evidenceSummary.waiting.slice(0,6).join('\n• ') : (a?.decision?.reason || 'Confirmation gates are not ready.');
+        await bot.sendMessage(msg.chat.id,
+          `🟡 *V TRADE AI — XAUUSD*\n\n*${a.signal || 'WAIT'}* — ${a.status || 'WAIT'}\n`+
+          `Price: *${a.price ?? a.quote?.price ?? '—'}*\n`+
+          `Confidence: *${a.confidence ?? '—'}/100*\n\n`+
+          `Why WAIT:\n• ${blockers}\n\n`+
+          `No entry alert is sent until all defined confirmation gates pass.`,
+          {parse_mode:'Markdown'});
+      }
+    } catch(e){
+      console.error('[TELEGRAM] /signal:',e?.message || e);
+      await bot.sendMessage(msg.chat.id,'⚠️ ICT analysis temporarily unavailable. Check MT5 feed / Render logs.');
+    }
   });
-  bot.onText(/^\/status$/,msg=>bot.sendMessage(msg.chat.id,'🟢 V TRADE AI online — MTF ICT engine active.'));
-  if(process.env.RENDER && APP_BASE_URL && TELEGRAM_WEBHOOK_SECRET){
-    bot.setWebHook(`${APP_BASE_URL}/telegram/webhook`,{secret_token:TELEGRAM_WEBHOOK_SECRET})
-      .catch(e=>console.error('Webhook setup:',e.message));
+
+  bot.onText(/^\/status(?:@\w+)?$/,async msg=>{
+    const p=brokerLivePrice();
+    const feed=p ? `🟢 MT5 READY | ${p.price.toFixed(2)} | age ${p.ageSec}s` : '🟠 MT5 feed not ready/stale';
+    await bot.sendMessage(msg.chat.id,`🟢 V TRADE AI online\n${feed}\nTelegram webhook: ACTIVE`);
+  });
+
+  if(process.env.RENDER && APP_BASE_URL){
+    bot.setWebHook(`${APP_BASE_URL}/telegram/webhook`,{secret_token:TELEGRAM_WEBHOOK_SECRET_EFFECTIVE})
+      .then(()=>console.log(`[TELEGRAM WEBHOOK] ACTIVE | ${APP_BASE_URL}/telegram/webhook`))
+      .catch(e=>console.error('[TELEGRAM WEBHOOK] setup failed:',e.message));
   }
 }
 
