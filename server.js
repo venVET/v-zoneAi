@@ -20,7 +20,7 @@ const HOST = '0.0.0.0';
 // Telegram is user-configurable. Tokens are never sent to the browser and are kept
 // only in server memory for the active session. Optional env credentials remain
 // supported for owner/admin fallback deployments.
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '';
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_AUTO_TOKEN || '';
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
 // Optional OpenAI AI-confirmation layer. The key stays server-side and is never sent to the browser.
