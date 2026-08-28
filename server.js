@@ -1061,12 +1061,29 @@ function analyzeTF(c) {
   // Expose the same fresh ICT zones used by the opportunity engine so every
   // MTF row (including M1) can show a directional setup without inventing one.
   const side=s?.bias==='BULLISH'||s?.bias==='BEARISH' ? s.bias : trend;
+  // Directional score is a transparent MTF display metric, not an entry signal.
+  // It is derived only from closed-candle structure + EMA/RSI/MACD evidence.
+  let directionScore=50;
+  if (side==='BULLISH') directionScore=60;
+  else if (side==='BEARISH') directionScore=40;
+  if (trend==='BULLISH') directionScore+=8;
+  else if (trend==='BEARISH') directionScore-=8;
+  if (r!=null) { if (r>=55) directionScore+=7; else if (r<=45) directionScore-=7; }
+  if (m?.bias==='BULLISH') directionScore+=7;
+  else if (m?.bias==='BEARISH') directionScore-=7;
+  if (s?.mss==='BULLISH'||s?.bos==='BULLISH') directionScore+=5;
+  else if (s?.mss==='BEARISH'||s?.bos==='BEARISH') directionScore-=5;
+  directionScore=Math.max(0,Math.min(100,Math.round(directionScore)));
   const fvg=latestFreshFvg(c, Math.min(12, Math.max(6, c.length-3)));
   const ob=latestAlignedOrderBlock(c, side, Math.min(20, Math.max(6, c.length-3)));
   return {
     structure:s,sweep,atr:a,ema20:e20,ema50:e50,trend,rsi:r==null?null:Math.round(r*100)/100,
     macd:m?{line:m.line,signal:m.signal,histogram:m.histogram,bias:m.histogram>0?'BULLISH':m.histogram<0?'BEARISH':'NEUTRAL'}:null,
-    adx:dx,volume:vb,last:c[c.length-1]?.c,fvg,orderBlock:ob
+    adx:dx,volume:vb,last:c[c.length-1]?.c,directionScore,
+    // Keep a bounded closed-candle series for the UI chart and MTF diagnostics.
+    candles:c.slice(-80).map(x=>({t:x.t,open:x.o,high:x.h,low:x.l,close:x.c,volume:x.v})),
+    lastCandle:c[c.length-1]?{t:c[c.length-1].t,open:c[c.length-1].o,high:c[c.length-1].h,low:c[c.length-1].l,close:c[c.length-1].c,volume:c[c.length-1].v}:null,
+    fvg,orderBlock:ob
   };
 }
 

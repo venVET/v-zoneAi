@@ -50,17 +50,21 @@
 
   function nodeFrom(raw,tf){
     const root=raw?.analysis||raw?.data||raw||{};
-    const mtf=root.mtf||root.multiTimeframe||root.timeframes||{};
+    // /api/pre-market/mt5-authoritative returns the canonical server object
+    // with per-timeframe analysis under `timeframes`, not `mtf`.
+    const mtf=root.timeframes||root.mtf||root.multiTimeframe||{};
     return mtf[tf]||mtf[tf.toLowerCase()]||root[tf]||root[tf.toLowerCase()]||{};
   }
 
   function normalize(tf,d,raw){
-    const x=raw&&Object.keys(raw).length?raw:{};
-    const buy=pct(val(x,['buyScore','buyPct','buyStrengthPct','buyerPower','longScore','buyProbability']));
-    const sell=pct(val(x,['sellScore','sellPct','sellStrengthPct','sellerPower','shortScore','sellProbability']));
-    const score=pct(val(x,['directionScore','setupScore','score','confidence']));
-    const bias=biasOf(val(x,['bias','direction','trend']));
-    const q=d?.quote||d?.mt5Quote||d?.mt5||{};
+    const x=d&&Object.keys(d).length?d:{};
+    const rawScore=num(val(x,['directionScore','setupScore','score','confidence']));
+    const rawBias=val(x,['bias','direction','trend']) ?? x?.structure?.bias;
+    const bias=biasOf(rawBias);
+    const score=pct(rawScore ?? x?.directionScore);
+    const buy= pct(val(x,['buyScore','buyPct','buyStrengthPct','buyerPower','longScore','buyProbability'])) ?? (score!=null ? (bias==='BULLISH'?score:bias==='BEARISH'?100-score:50) : null);
+    const sell= pct(val(x,['sellScore','sellPct','sellStrengthPct','sellerPower','shortScore','sellProbability'])) ?? (score!=null ? (bias==='BEARISH'?score:bias==='BULLISH'?100-score:50) : null);
+    const q=raw?.quote||raw?.mt5Quote||raw?.mt5||d?.quote||d?.mt5Quote||d?.mt5||{};
     const c=x.lastCandle||x.candle||x.latestCandle||(Array.isArray(x.candles)?x.candles[x.candles.length-1]:null)||(Array.isArray(x.bars)?x.bars[x.bars.length-1]:null)||{};
     const price=num(val(d,['price','currentPrice','livePrice'])) ?? num(val(q,['price','bid','ask'])) ?? num(val(x,['price','currentPrice','close'])) ?? num(c.close??c.c);
     const open=num(c.open??c.o??x.open), high=num(c.high??c.h??x.high), low=num(c.low??c.l??x.low), close=num(c.close??c.c??x.close??price);
