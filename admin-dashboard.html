@@ -127,7 +127,7 @@ body{background:radial-gradient(circle at 12% 0,#073326 0,transparent 28%),radia
 
   <section class="section module-card" id="vision">
     <div class="card">
-      <div class="section-title"><h2>◈ Screenshot AI Vision</h2><span>OLLAMA LOCAL</span></div>
+      <div class="section-title"><h2>◈ Screenshot AI Vision</h2><span>OLLAMA VISION</span></div>
       <div class="notice">Evidence extraction only. Vision AI cannot create BUY/SELL, Entry, SL or TP. Unclear evidence stays WAIT.</div>
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,1fr);gap:12px;margin-top:12px">
         <div class="card">
@@ -188,5 +188,5 @@ document.querySelectorAll('.news-filter button').forEach(b=>b.onclick=()=>{docum
 $('refresh').onclick=()=>{load();fetchHeadlines();showToast(lang==='km'?'កំពុង Refresh ទិន្នន័យ…':'Refreshing live data…')};$('api').addEventListener('change',load);document.querySelectorAll('.tfs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tfs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');showToast(`${b.textContent} selected`)});
 applyLang();load();fetchHeadlines();setInterval(load,5000);setInterval(fetchHeadlines,60000);setInterval(loadCalendar,15000);setInterval(()=>{if(lastNews)renderCalendar(lastNews)},1000);
 </script>
-<script src="ai-vision-upload.js?v=20260829fix7"></script><script src="site-connection.js"></script></body>
+<script src="ai-vision-upload.js?v=20260829fix8"></script><script src="site-connection.js"></script></body>
 </html>

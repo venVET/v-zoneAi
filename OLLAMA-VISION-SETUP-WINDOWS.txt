@@ -18,7 +18,7 @@ GitHub Pages -> localhost:11435 bridge -> localhost:11434 Ollama -> Vision model
 
 RENDER NOTE
 Render cannot reach Ollama running on your personal PC at 127.0.0.1.
-Therefore the primary/local path is the PC bridge. The Render -> Ollama fallback only works if OLLAMA_BASE_URL on Render points to a reachable Ollama host.
+Therefore the primary/local path is the PC bridge. The Render path works only if OLLAMA_BASE_URL on Render points to a reachable Ollama host. Otherwise the browser falls back to the PC bridge.
 
 VISION SAFETY
 The Vision module is evidence extraction only. It returns WAIT as the final signal and does not create orders, Entry, SL or TP.

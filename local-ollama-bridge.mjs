@@ -1,12 +1,13 @@
 'use strict';
 
-const http = require('http');
+import http from 'node:http';
 
 const HOST = process.env.OLLAMA_BRIDGE_HOST || '127.0.0.1';
 const PORT = Number(process.env.OLLAMA_BRIDGE_PORT || 11435);
 const OLLAMA_URL = String(process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const MODEL = String(process.env.OLLAMA_VISION_MODEL || 'qwen2.5vl:3b').trim();
 const MAX_BYTES = 6 * 1024 * 1024;
+const FETCH_TIMEOUT_MS = Math.max(3000, Number(process.env.OLLAMA_FETCH_TIMEOUT_MS || 10000));
 
 function send(res, status, body) {
   const out = JSON.stringify(body);
@@ -55,8 +56,15 @@ If evidence is not clearly visible, use UNKNOWN/UNCLEAR.
 Return ONLY valid JSON:
 {"imageQuality":"GOOD|LIMITED|INVALID","symbol":"string or UNKNOWN","timeframe":"string or UNKNOWN","visiblePrice":number|null,"trend":"BULLISH|BEARISH|RANGE|UNKNOWN","liquiditySweep":"BULLISH|BEARISH|NONE|UNCLEAR","mssBos":"BULLISH|BEARISH|NONE|UNCLEAR","fvg":"BULLISH|BEARISH|NONE|UNCLEAR","orderBlock":"BULLISH|BEARISH|NONE|UNCLEAR","confidence":0,"evidence":[],"blockers":[]}`;
 
+async function fetchWithTimeout(url, options={}, timeoutMs=FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try { return await fetch(url, {...options, signal:controller.signal}); }
+  finally { clearTimeout(timer); }
+}
+
 async function ollama(path, body) {
-  const r = await fetch(OLLAMA_URL + path, {
+  const r = await fetchWithTimeout(OLLAMA_URL + path, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)
@@ -71,7 +79,7 @@ const server = http.createServer(async (req,res)=>{
   if (req.method === 'OPTIONS') return send(res,204,{success:true});
   if (req.url === '/health' && req.method === 'GET') {
     try {
-      const r = await fetch(OLLAMA_URL + '/api/tags');
+      const r = await fetchWithTimeout(OLLAMA_URL + '/api/tags', {method:'GET'}, 5000);
       const d = await r.json().catch(()=>({}));
       const models = Array.isArray(d.models) ? d.models.map(x=>x.name).filter(Boolean) : [];
       return send(res, r.ok ? 200 : 503, {
@@ -80,7 +88,7 @@ const server = http.createServer(async (req,res)=>{
         error:r.ok?null:(d.error || `Ollama HTTP ${r.status}`)
       });
     } catch(e) {
-      return send(res,503,{success:false,bridge:true,ollama:OLLAMA_URL,model:MODEL,error:e.message||'Ollama unavailable'});
+      return send(res,503,{success:false,bridge:true,ollama:OLLAMA_URL,model:MODEL,error:e?.name === 'AbortError' ? 'Ollama health timeout' : (e.message||'Ollama unavailable')});
     }
   }
 

@@ -127,10 +127,10 @@ body{background:radial-gradient(circle at 12% 0,#073326 0,transparent 28%),radia
 
   <section class="section module-card" id="vision">
     <div class="card">
-      <div class="section-title"><h2>◈ Screenshot AI Vision</h2><span>OLLAMA LOCAL</span></div>
+      <div class="section-title"><h2>◈ Screenshot AI Vision</h2><span>OLLAMA VISION</span></div>
       <div class="notice">Upload a chart screenshot. The browser tries your local Ollama first, then Render → Ollama. Vision is evidence-only and cannot create BUY/SELL, Entry, SL or TP.</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
-        <span id="visionStatus" class="notice" style="margin:0;padding:8px 10px">Ollama Local Bridge: ready to test</span>
+        <span id="visionStatus" class="notice" style="margin:0;padding:8px 10px">Vision service: Render → Ollama / Local Bridge fallback</span>
         <input id="visionModel" value="qwen2.5vl:3b" aria-label="Ollama vision model" style="min-height:38px;background:#09111e;border:1px solid var(--line);border-radius:9px;padding:0 10px;min-width:180px">
         <button id="visionSaveModel" class="btn" type="button">Save model</button>
       </div>
@@ -200,5 +200,5 @@ applyLang();load();fetchHeadlines();setInterval(load,5000);setInterval(fetchHead
   m.value=localStorage.getItem('vtrade_ollama_model')||'qwen2.5vl:3b';
   b?.addEventListener('click',()=>{localStorage.setItem('vtrade_ollama_model',m.value.trim()||'qwen2.5vl:3b'); const s=document.getElementById('visionStatus'); if(s)s.textContent='Saved Ollama model: '+(m.value.trim()||'qwen2.5vl:3b');});
 })();
-</script><script src="ai-vision-upload.js?v=20260829fix7"></script><script src="site-connection.js"></script></body>
+</script><script src="ai-vision-upload.js?v=20260829fix8"></script><script src="site-connection.js"></script></body>
 </html>

@@ -74,7 +74,9 @@ services:
       - key: MIN_ENTRY_SCORE
         value: "76"
       - key: OPENAI_ENABLED
-        value: "true"
+        value: "false"
+      - key: VTRADE_REMOTE_VISION_ENABLED
+        value: "false"
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL

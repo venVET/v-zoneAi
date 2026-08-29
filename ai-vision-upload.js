@@ -9,7 +9,7 @@
   if (!input || !preview || !result || !button) return;
 
   const DEFAULT_MODEL = 'qwen2.5vl:3b';
-  const LOCAL_BRIDGE = 'http://127.0.0.1:11435';
+  const LOCAL_BRIDGE = String(localStorage.getItem('vtrade_ollama_bridge') || 'http://127.0.0.1:11435').replace(/\/$/,'');
   let dataUrl = '';
 
   function setStatus(text, ok=false) {
@@ -126,29 +126,63 @@ Return ONLY valid JSON:
     reader.readAsDataURL(file);
   });
 
+  async function tryRender() {
+    setStatus('Trying Render Vision…');
+    result.textContent='Connecting to Render Vision service…';
+    return await renderOllama();
+  }
+
+  async function tryLocal() {
+    setStatus('Trying Ollama Local Bridge…');
+    result.textContent='Connecting to local Ollama Vision…';
+    const health = await fetch(`${LOCAL_BRIDGE}/health`, {cache:'no-store'});
+    const hd = await health.json().catch(()=>({}));
+    if (!health.ok || !hd.success) throw new Error(hd.error || 'Ollama Local Bridge is not running');
+    if (hd.modelInstalled === false) throw new Error(`Vision model ${hd.model} is not installed. Run START-OLLAMA-VISION-BRIDGE.cmd.`);
+    return await localOllama();
+  }
+
   button.addEventListener('click', async () => {
     if (!dataUrl) { result.textContent='Upload a chart screenshot first.'; return; }
     button.disabled = true;
-    setStatus('Checking Ollama Local Bridge…');
-    result.textContent='Checking local Vision service…';
+    let renderError = null;
+    let localError = null;
     try {
-      const health = await fetch(`${LOCAL_BRIDGE}/health`, {cache:'no-store'});
-      const hd = await health.json().catch(()=>({}));
-      if (!health.ok || !hd.success) {
-        throw new Error(hd.error || 'Ollama Local Bridge is not running');
+      // Local-first: GitHub Pages -> localhost:11435 bridge -> Ollama :11434.
+      // This is the correct path when Ollama is running on the user's PC.
+      try {
+        const a = await tryLocal();
+        renderAnalysis(a, `Ollama Local Bridge · ${getModel()}`);
+        setStatus('Local Ollama Vision analysis complete.', true);
+        return;
+      } catch (e) {
+        localError = e;
       }
-      if (hd.modelInstalled === false) {
-        throw new Error(`Vision model ${hd.model} is not installed. START-OLLAMA-VISION-BRIDGE.cmd will install it.`);
+
+      // Optional remote fallback only when explicitly enabled. Never assume Render can reach localhost.
+      const remoteEnabled = String(window.VTRADE_REMOTE_VISION_ENABLED || '').toLowerCase() === 'true';
+      if (remoteEnabled) {
+        try {
+          const a = await tryRender();
+          renderAnalysis(a, `Render → Ollama · ${getModel()}`);
+          setStatus('Render Vision analysis complete.', true);
+          return;
+        } catch (e) {
+          renderError = e;
+        }
       }
-      setStatus(`Trying local Ollama · ${hd.model}`, true);
-      result.textContent='Analyzing screenshot…';
-      const a = await localOllama();
-      renderAnalysis(a, `Ollama local · ${getModel()}`);
-      setStatus('Ollama local analysis complete.', true);
-    } catch(localError) {
+
+      const rmsg = renderError?.message || (remoteEnabled ? 'Render Vision unavailable' : 'Remote Render Vision disabled');
+      const lmsg = localError?.message || 'Local Ollama Bridge unavailable';
       result.textContent =
-        `Vision unavailable.\n\n${localError.message}\n\nFlow: GitHub Pages → localhost:11435 → Ollama :11434`;
-      setStatus('Start the Local Ollama Vision Bridge on this PC.', false);
+        `Vision unavailable.\n\n` +
+        `Render: ${rmsg}\n` +
+        `Local: ${lmsg}\n\n` +
+        `Required flow:\n` +
+        `GitHub Pages → Render → reachable Ollama\n` +
+        `or\n` +
+        `GitHub Pages → localhost:11435 → Ollama :11434`;
+      setStatus('Vision service unavailable — check Render Ollama URL or start local bridge.', false);
     } finally {
       button.disabled=false;
     }
