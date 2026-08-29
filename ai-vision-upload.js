@@ -10,6 +10,7 @@
 
   const DEFAULT_MODEL = 'qwen2.5vl:3b';
   const LOCAL_BRIDGE = String(localStorage.getItem('vtrade_ollama_bridge') || 'http://127.0.0.1:11435').replace(/\/$/,'');
+  const LOCAL_BRIDGES = [LOCAL_BRIDGE, 'http://localhost:11435'].filter((v,i,a)=>v && a.indexOf(v)===i);
   let dataUrl = '';
 
   function setStatus(text, ok=false) {
@@ -50,30 +51,26 @@ Return ONLY valid JSON:
     };
   }
 
-  async function localOllama() {
-    const bridge = LOCAL_BRIDGE;
+  async function fetchWithTimeout(url, options={}, timeoutMs=8000) {
     const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), 50000);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const r = await fetch(`${bridge}/api/vision/analyze`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({imageDataUrl:dataUrl}),
-        signal:controller.signal
-      });
-      const text = await r.text();
-      let d={}; try { d=text?JSON.parse(text):{}; } catch(_){ }
-      if (!r.ok || !d.success) throw new Error(d.error || `Local Ollama bridge HTTP ${r.status}`);
-      return normalize(d.analysis || {});
-    } catch(e) {
-      if (e?.name === 'AbortError') throw new Error('Local Ollama bridge timeout');
-      if (e instanceof TypeError || /Failed to fetch/i.test(String(e?.message||''))) {
-        throw new Error('Local Ollama Bridge is not reachable. Run START-OLLAMA-VISION-BRIDGE.cmd on this PC and keep it open.');
-      }
-      throw e;
+      return await fetch(url, {...options, signal:controller.signal, cache:'no-store'});
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  async function localOllama(bridge) {
+    const r = await fetchWithTimeout(`${bridge}/api/vision/analyze`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({imageDataUrl:dataUrl})
+    }, 60000);
+    const text = await r.text();
+    let d={}; try { d=text?JSON.parse(text):{}; } catch(_){ }
+    if (!r.ok || !d.success) throw new Error(d.error || `Local Ollama bridge HTTP ${r.status}`);
+    return normalize(d.analysis || {});
   }
 
   async function renderOllama() {
@@ -133,13 +130,26 @@ Return ONLY valid JSON:
   }
 
   async function tryLocal() {
-    setStatus('Trying Ollama Local Bridge…');
-    result.textContent='Connecting to local Ollama Vision…';
-    const health = await fetch(`${LOCAL_BRIDGE}/health`, {cache:'no-store'});
-    const hd = await health.json().catch(()=>({}));
-    if (!health.ok || !hd.success) throw new Error(hd.error || 'Ollama Local Bridge is not running');
-    if (hd.modelInstalled === false) throw new Error(`Vision model ${hd.model} is not installed. Run START-OLLAMA-VISION-BRIDGE.cmd.`);
-    return await localOllama();
+    setStatus('Checking Ollama Local Bridge…');
+    result.textContent='Checking local Ollama bridge on this PC…';
+    let lastError = null;
+    for (const bridge of LOCAL_BRIDGES) {
+      try {
+        const health = await fetchWithTimeout(`${bridge}/health`, {}, 5000);
+        const hd = await health.json().catch(()=>({}));
+        if (!health.ok || !hd.success) throw new Error(hd.error || 'Bridge health check failed');
+        if (hd.modelInstalled === false) throw new Error(`Vision model ${hd.model} is not installed. Run START-OLLAMA-VISION-BRIDGE.cmd.`);
+        setStatus(`Ollama local connected · ${hd.model}`, true);
+        return await localOllama(bridge);
+      } catch(e) {
+        lastError = e;
+      }
+    }
+    const msg = String(lastError?.message || 'Bridge unavailable');
+    if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+      throw new Error('Local Ollama Bridge not reachable. Start START-OLLAMA-VISION-BRIDGE.cmd on this same PC and keep it open.');
+    }
+    throw lastError || new Error(msg);
   }
 
   button.addEventListener('click', async () => {
