@@ -1,0 +1,23 @@
+V TRADE AI FINAL FIX — 2026-08-29
+
+Canonical Login:
+https://venvet.github.io/v-zoneAi/login.html
+
+Canonical User Terminal:
+premium-dashboard-live.html
+
+Admin Terminal:
+admin-dashboard.html
+
+Backend:
+https://v-trade-ai.onrender.com
+
+Fixes:
+- Removed stale forexai backend URL from index.html.
+- Login uses v-trade-ai.onrender.com and retries Render cold starts.
+- User login routes to premium-dashboard-live.html.
+- Admin login routes to admin-dashboard.html.
+- admin-dashboard.html is now the real terminal UI, not a redirect stub.
+- RBAC guard protects dashboard.html and premium-dashboard-live.html.
+- GitHub Pages workflow publishes repository root directly.
+- No Telegram/OpenAI secrets are stored in frontend files.

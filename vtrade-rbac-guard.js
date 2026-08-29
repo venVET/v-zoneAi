@@ -5,14 +5,14 @@
   window.__VTRADE_RBAC_GUARD__ = true;
   const BACKEND='https://v-trade-ai.onrender.com';
   const file=String(location.pathname.split('/').pop()||'').toLowerCase();
-  const isAdminPage=file==='admin-dashboard.html', isTerminalPage=file==='dashboard.html';
+  const isAdminPage=file==='admin-dashboard.html', isTerminalPage=file==='dashboard.html'||file==='premium-dashboard-live.html';
   if(!isAdminPage&&!isTerminalPage)return;
   const token=()=>window.VTRADE_CONNECTION?.token?.()||localStorage.getItem('vtrade_auth_token')||localStorage.getItem('vtrade_auth')||sessionStorage.getItem('vtrade_auth_token')||sessionStorage.getItem('vtrade_auth')||'';
   const isAdminRole=r=>['admin','administrator'].includes(String(r||'').trim().toLowerCase());
   const isMobile=()=>{try{return matchMedia('(max-width:900px)').matches||/iphone|ipad|ipod|android|mobile/i.test(navigator.userAgent)}catch{return/iphone|ipad|ipod|android|mobile/i.test(navigator.userAgent)}};
   const login=r=>location.replace(`login.html?required=login&reason=${encodeURIComponent(r||'login')}`);
   const goAdmin=()=>location.replace('admin-dashboard.html?v=20260820-phone-v91');
-  const goTerminal=()=>location.replace('dashboard.html?v=20260820-phone-v91');
+  const goTerminal=()=>location.replace('premium-dashboard-live.html?v=20260829-final-v10');
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   async function verifySession(){const t=token();if(!t)return{ok:false,reason:'missing-token'};let err=null;for(let i=1;i<=4;i++){try{const r=await fetch(BACKEND+'/api/auth/session',{method:'GET',mode:'cors',credentials:'omit',cache:'no-store',headers:{Accept:'application/json','x-vtrade-auth':t}}),d=await r.json().catch(()=>({}));if(r.ok&&d.user)return{ok:true,user:d.user};err=new Error(r.status===401?'Unauthorized':`Session HTTP ${r.status}`)}catch(e){err=e}if(i<4)await sleep(250*i)}return{ok:false,reason:err?.message||'session-failed'}}
   function persistUser(u){const raw=JSON.stringify(u||{});try{localStorage.setItem('vtrade_user',raw)}catch{}try{sessionStorage.setItem('vtrade_user',raw)}catch{}}

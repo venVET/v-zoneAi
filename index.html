@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self';connect-src 'self' https://forexai-6xw6.onrender.com;style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline';img-src 'self' data: https:;frame-ancestors 'none';base-uri 'self';form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self';connect-src 'self' https://v-trade-ai.onrender.com;style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline';img-src 'self' data: https:;frame-ancestors 'none';base-uri 'self';form-action 'self'">
 <title>V TRADE AI — Secure Sign In</title>
 <style>
 :root{--bg:#04070d;--line:#233552;--text:#f5f8ff;--muted:#8d9bb0;--v:#7136e8;--g:#22e58a;--r:#ff5968;--c:#35d8ff}
@@ -48,7 +48,7 @@ body{display:grid;place-items:center;padding:12px}
 </main>
 <script>
 const API=(location.hostname.endsWith('.github.io') ? 'https://v-trade-ai.onrender.com' : location.origin);
-const ROUTE_VERSION='20260828-route-v5';
+const ROUTE_VERSION='20260829-final-v10';
 const $=id=>document.getElementById(id);
 let role='user',challenge='';
 function setRole(r){role=r;$('userMode').classList.toggle('active',r==='user');$('adminMode').classList.toggle('active',r==='admin');$('submit').textContent=r==='admin'?'👑 Sign in as Admin':'🔐 Sign in as User';}
