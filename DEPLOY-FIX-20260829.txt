@@ -21,3 +21,8 @@ Fixes:
 - RBAC guard protects dashboard.html and premium-dashboard-live.html.
 - GitHub Pages workflow publishes repository root directly.
 - No Telegram/OpenAI secrets are stored in frontend files.
+
+LIVE DATA GUARD:
+- Added live-xauusd.mjs and START-LIVE-XAUUSD.cmd.
+- CLI reads only /api/analysis/xauusd from Render and never uses hardcoded fallback prices.
+- If old 2350-range values appear, the old local CLI is being executed, not this package.
