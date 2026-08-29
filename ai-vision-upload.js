@@ -9,8 +9,8 @@
   if (!input || !preview || !result || !button) return;
 
   const DEFAULT_MODEL = 'qwen2.5vl:3b';
-  const LOCAL_BRIDGE = String(localStorage.getItem('vtrade_ollama_bridge') || 'http://127.0.0.1:11435').replace(/\/$/,'');
-  const LOCAL_BRIDGES = [LOCAL_BRIDGE, 'http://localhost:11435'].filter((v,i,a)=>v && a.indexOf(v)===i);
+  const LOCAL_BRIDGE = String(localStorage.getItem('vtrade_ollama_bridge') || 'http://localhost:11435').replace(/\/$/,'');
+  const LOCAL_BRIDGES = [LOCAL_BRIDGE, 'http://localhost:11435', 'http://127.0.0.1:11435'].filter((v,i,a)=>v && a.indexOf(v)===i);
   let dataUrl = '';
 
   function setStatus(text, ok=false) {

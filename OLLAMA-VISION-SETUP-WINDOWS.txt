@@ -24,3 +24,7 @@ VISION SAFETY
 The Vision module is evidence extraction only. It returns WAIT as the final signal and does not create orders, Entry, SL or TP.
 
 IMPORTANT FIX v9: GitHub Pages does not proxy your PC Ollama. The browser must reach the local bridge at 127.0.0.1:11435. If Analyze shows "Bridge not reachable", start START-OLLAMA-VISION-BRIDGE.cmd on the same PC, confirm /health returns success=true, and keep the CMD window open. The GitHub Pages CSP now explicitly permits the local bridge ports.
+
+
+FIX10 NOTE
+The local bridge now sends Access-Control-Allow-Private-Network and the website connection layer no longer forces credentials on localhost requests. This fixes the common HTTPS GitHub Pages -> localhost:11435 'Failed to fetch' / CORS failure when the bridge is running.
