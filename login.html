@@ -56,7 +56,7 @@ function say(text,ok=false){$('msg').textContent=text;$('msg').style.color=ok?'#
 async function api(path,options={}){
 const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
 try{
-const response=await fetch(API+path,{...options,mode:'cors',credentials:'omit',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+const response=await fetch(API+path,{...options,mode:'cors',credentials:'omit',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json','x-vtrade-auth':String(sessionStorage.getItem('vtrade_auth_token')||localStorage.getItem('vtrade_auth_token')||''),...(options.headers||{})}});
 const text=await response.text();let data={};try{data=text?JSON.parse(text):{};}catch{data={error:text||`HTTP ${response.status}`};}
 if(!response.ok)throw new Error(data.error||`Request failed (${response.status})`);return data;
 }catch(error){
