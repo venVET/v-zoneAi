@@ -9,8 +9,8 @@
   if (!input || !preview || !result || !button) return;
 
   const DEFAULT_MODEL = 'qwen2.5vl:3b';
-  const LOCAL_BRIDGE = String(localStorage.getItem('vtrade_ollama_bridge') || 'http://localhost:11435').replace(/\/$/,'');
-  const LOCAL_BRIDGES = [LOCAL_BRIDGE, 'http://localhost:11435', 'http://127.0.0.1:11435'].filter((v,i,a)=>v && a.indexOf(v)===i);
+  const LOCAL_BRIDGE = String(localStorage.getItem('vtrade_ollama_bridge') || 'http://127.0.0.1:11435').replace(/\/$/,'');
+  const LOCAL_BRIDGES = [LOCAL_BRIDGE, 'http://127.0.0.1:11435', 'http://localhost:11435'].filter((v,i,a)=>v && a.indexOf(v)===i);
   let dataUrl = '';
 
   function setStatus(text, ok=false) {
@@ -147,7 +147,7 @@ Return ONLY valid JSON:
     }
     const msg = String(lastError?.message || 'Bridge unavailable');
     if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
-      throw new Error('Local Ollama Bridge not reachable. Start START-OLLAMA-VISION-BRIDGE.cmd on this same PC and keep it open.');
+      throw new Error('Local Ollama Bridge not reachable. Start START-OLLAMA-VISION-BRIDGE.cmd on this same PC, allow Chrome Private Network Access, and keep the CMD open.');
     }
     throw lastError || new Error(msg);
   }
