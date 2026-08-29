@@ -1,0 +1,20 @@
+V-TRADE AI — OLLAMA VISION SETUP
+
+1. Install Ollama on Windows.
+2. Open CMD and run:
+   ollama pull qwen2.5vl:3b
+3. Make sure Ollama is running:
+   ollama serve
+   (If the Ollama desktop app is already running, you usually do not need this command.)
+4. Open the V TRADE AI dashboard -> "Screenshot AI".
+5. Upload PNG/JPG/WebP chart (max 6 MB).
+6. Select/save the Ollama model if needed.
+7. Click "Analyze Screenshot".
+
+IMPORTANT
+- The dashboard first tries http://127.0.0.1:11434 directly, so Ollama can run on the user's PC.
+- If local Ollama is unavailable, the page falls back to Render -> Ollama.
+- A Render server cannot use its own 127.0.0.1 to reach Ollama running on your PC. For Render -> Ollama, OLLAMA_BASE_URL must point to a reachable Ollama host.
+- Vision output is deliberately WAIT-only evidence extraction. It does not place trades and does not generate Entry/SL/TP.
+
+If browser CORS blocks local Ollama, set Ollama's allowed origins for the dashboard origin before testing.

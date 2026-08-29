@@ -128,7 +128,12 @@ body{background:radial-gradient(circle at 12% 0,#073326 0,transparent 28%),radia
   <section class="section module-card" id="vision">
     <div class="card">
       <div class="section-title"><h2>◈ Screenshot AI Vision</h2><span>OLLAMA LOCAL</span></div>
-      <div class="notice">Evidence extraction only. Vision AI cannot create BUY/SELL, Entry, SL or TP. Unclear evidence stays WAIT.</div>
+      <div class="notice">Upload a chart screenshot. The browser tries your local Ollama first, then Render → Ollama. Vision is evidence-only and cannot create BUY/SELL, Entry, SL or TP.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+        <span id="visionStatus" class="notice" style="margin:0;padding:8px 10px">Ollama local: ready to test</span>
+        <input id="visionModel" value="qwen2.5vl:3b" aria-label="Ollama vision model" style="min-height:38px;background:#09111e;border:1px solid var(--line);border-radius:9px;padding:0 10px;min-width:180px">
+        <button id="visionSaveModel" class="btn" type="button">Save model</button>
+      </div>
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,1fr);gap:12px;margin-top:12px">
         <div class="card">
           <input id="visionImage" type="file" accept="image/png,image/jpeg,image/webp">
@@ -188,5 +193,12 @@ document.querySelectorAll('.news-filter button').forEach(b=>b.onclick=()=>{docum
 $('refresh').onclick=()=>{load();fetchHeadlines();showToast(lang==='km'?'កំពុង Refresh ទិន្នន័យ…':'Refreshing live data…')};$('api').addEventListener('change',load);document.querySelectorAll('.tfs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tfs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');showToast(`${b.textContent} selected`)});
 applyLang();load();fetchHeadlines();setInterval(load,5000);setInterval(fetchHeadlines,60000);setInterval(loadCalendar,15000);setInterval(()=>{if(lastNews)renderCalendar(lastNews)},1000);
 </script>
-<script src="ai-vision-upload.js"></script><script src="site-connection.js"></script></body>
+<script>
+(() => {
+  const m=document.getElementById('visionModel'), b=document.getElementById('visionSaveModel');
+  if(!m) return;
+  m.value=localStorage.getItem('vtrade_ollama_model')||'qwen2.5vl:3b';
+  b?.addEventListener('click',()=>{localStorage.setItem('vtrade_ollama_model',m.value.trim()||'qwen2.5vl:3b'); const s=document.getElementById('visionStatus'); if(s)s.textContent='Saved Ollama model: '+(m.value.trim()||'qwen2.5vl:3b');});
+})();
+</script><script src="ai-vision-upload.js"></script><script src="site-connection.js"></script></body>
 </html>

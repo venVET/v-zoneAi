@@ -26,7 +26,7 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 const REQUIRE_WEBHOOK_SECRET = String(process.env.REQUIRE_WEBHOOK_SECRET || 'false').toLowerCase() === 'true';
 const TELEGRAM_SESSION_TTL_MS = Math.max(5 * 60 * 1000, Number(process.env.TELEGRAM_SESSION_TTL_MS || 24 * 60 * 60 * 1000));
 const MT5_MAX_AGE_MS = Number(process.env.MT5_MAX_AGE_MS || 15000);
-const APP_VERSION = '7.3.6-CORS-FIX-TELEGRAM';
+const APP_VERSION = '7.3.7-OLLAMA-VISION-LOCAL';
 const APP_BASE_URL = (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 const AUTH_SESSION_TTL_MS = Math.max(15 * 60 * 1000, Number(process.env.AUTH_SESSION_TTL_MS || 8 * 60 * 60 * 1000));
 const ANALYSIS_REQUEST_TIMEOUT_MS = Math.max(1500, Number(process.env.ANALYSIS_REQUEST_TIMEOUT_MS || 7000));

@@ -5,19 +5,115 @@
   const preview = $('visionPreview');
   const result = $('visionResult');
   const button = $('visionAnalyze');
+  const status = $('visionStatus');
   if (!input || !preview || !result || !button) return;
 
+  const LOCAL_OLLAMA = 'http://127.0.0.1:11434';
+  const DEFAULT_MODEL = 'qwen2.5vl:3b';
   let dataUrl = '';
+
+  function setStatus(text, ok=false) {
+    if (!status) return;
+    status.textContent = text;
+    status.className = 'notice ' + (ok ? 'success' : '');
+  }
+
+  function getModel() {
+    return String(localStorage.getItem('vtrade_ollama_model') || DEFAULT_MODEL).trim();
+  }
+
+  function buildPrompt() {
+    return `You are V-TRADE AI screenshot evidence extraction.
+Analyze ONLY pixels visibly present in the supplied chart screenshot.
+Never use live market data, memory, or outside knowledge.
+Never invent candles, OHLC values, prices, indicators, timeframes, symbols, liquidity, MSS/BOS, FVG, or order blocks.
+Never output BUY, SELL, ENTRY, SL, TP, or a trade recommendation.
+If evidence is not clearly visible, use UNKNOWN/UNCLEAR.
+Return ONLY valid JSON:
+{"imageQuality":"GOOD|LIMITED|INVALID","symbol":"string or UNKNOWN","timeframe":"string or UNKNOWN","visiblePrice":number|null,"trend":"BULLISH|BEARISH|RANGE|UNKNOWN","liquiditySweep":"BULLISH|BEARISH|NONE|UNCLEAR","mssBos":"BULLISH|BEARISH|NONE|UNCLEAR","fvg":"BULLISH|BEARISH|NONE|UNCLEAR","orderBlock":"BULLISH|BEARISH|NONE|UNCLEAR","confidence":0,"evidence":[],"blockers":[]}`;
+  }
+
+  function normalize(a={}) {
+    return {
+      imageQuality:a.imageQuality || 'INVALID',
+      symbol:a.symbol || 'UNKNOWN',
+      timeframe:a.timeframe || 'UNKNOWN',
+      visiblePrice:Number.isFinite(Number(a.visiblePrice)) ? Number(a.visiblePrice) : null,
+      trend:a.trend || 'UNKNOWN',
+      liquiditySweep:a.liquiditySweep || 'UNCLEAR',
+      mssBos:a.mssBos || 'UNCLEAR',
+      fvg:a.fvg || 'UNCLEAR',
+      orderBlock:a.orderBlock || 'UNCLEAR',
+      confidence:Math.max(0,Math.min(100,Number(a.confidence)||0)),
+      evidence:Array.isArray(a.evidence)?a.evidence.slice(0,12):[],
+      blockers:Array.isArray(a.blockers)?a.blockers.slice(0,12):[]
+    };
+  }
+
+  async function localOllama() {
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(), 45000);
+    try {
+      const r = await fetch(`${LOCAL_OLLAMA}/api/generate`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:getModel(),
+          prompt:buildPrompt(),
+          images:[dataUrl.split(',')[1]],
+          stream:false,
+          format:'json',
+          options:{temperature:0}
+        }),
+        signal:controller.signal
+      });
+      const text = await r.text();
+      let d={}; try { d=text?JSON.parse(text):{}; } catch(_){}
+      if (!r.ok) throw new Error(d.error || `Ollama HTTP ${r.status}`);
+      return normalize(JSON.parse(d.response || '{}'));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function renderOllama() {
+    const api = window.VTRADE_API_BASE || window.VTRADE_API || window.VTRADE_BACKEND || 'https://v-trade-ai.onrender.com';
+    const token = localStorage.getItem('vtrade_auth_token') || sessionStorage.getItem('vtrade_auth_token') || '';
+    const r = await fetch(`${api.replace(/\/$/,'')}/api/v5/ai/vision/chart`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json', ...(token ? {'x-vtrade-auth':token} : {})},
+      credentials:'omit',
+      body:JSON.stringify({imageDataUrl:dataUrl})
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || `Render HTTP ${r.status}`);
+    return normalize(d.analysis || {});
+  }
+
+  function renderAnalysis(a, source) {
+    result.textContent =
+      `Source: ${source}\n` +
+      `Symbol: ${a.symbol}\n` +
+      `Timeframe: ${a.timeframe}\n` +
+      `Visible price: ${a.visiblePrice ?? 'UNKNOWN'}\n` +
+      `Trend: ${a.trend}\n` +
+      `Liquidity: ${a.liquiditySweep}\n` +
+      `MSS/BOS: ${a.mssBos}\n` +
+      `FVG: ${a.fvg}\n` +
+      `Order Block: ${a.orderBlock}\n` +
+      `Confidence: ${a.confidence}%\n\n` +
+      `FINAL SIGNAL: WAIT\n` +
+      `Entry / SL / TP: NOT GENERATED`;
+  }
+
   input.addEventListener('change', () => {
     const file = input.files?.[0];
     if (!file) return;
     if (!/^image\/(png|jpeg|webp)$/i.test(file.type)) {
-      result.textContent = 'Only PNG, JPG or WebP is supported.';
-      return;
+      dataUrl=''; result.textContent='Only PNG, JPG or WebP is supported.'; return;
     }
     if (file.size > 6 * 1024 * 1024) {
-      result.textContent = 'Image must be 6 MB or smaller.';
-      return;
+      dataUrl=''; result.textContent='Image must be 6 MB or smaller.'; return;
     }
     const reader = new FileReader();
     reader.onload = () => {
@@ -25,42 +121,33 @@
       preview.src = dataUrl;
       preview.hidden = false;
       result.textContent = 'Screenshot ready. Click Analyze.';
+      setStatus(`Ollama local ready · model ${getModel()}`, true);
     };
     reader.readAsDataURL(file);
   });
 
   button.addEventListener('click', async () => {
-    if (!dataUrl) { result.textContent = 'Upload a chart screenshot first.'; return; }
+    if (!dataUrl) { result.textContent='Upload a chart screenshot first.'; return; }
     button.disabled = true;
-    result.textContent = 'Analyzing visible evidence…';
+    setStatus('Trying local Ollama…');
+    result.textContent='Analyzing screenshot…';
     try {
-      const api = window.VTRADE_API_BASE || window.VTRADE_API || window.VTRADE_BACKEND || 'https://v-trade-ai.onrender.com';
-      const token = localStorage.getItem('vtrade_auth_token') || sessionStorage.getItem('vtrade_auth_token') || '';
-      const r = await fetch(`${api.replace(/\/$/,'')}/api/v5/ai/vision/chart`, {
-        method:'POST',
-        headers:{'Content-Type':'application/json', ...(token ? {'x-vtrade-auth':token} : {})},
-        credentials:'omit',
-        body:JSON.stringify({imageDataUrl:dataUrl})
-      });
-      const d = await r.json();
-      if (!r.ok || !d.success) throw new Error(d.error || `HTTP ${r.status}`);
-      const a = d.analysis || {};
-      result.textContent =
-        `Symbol: ${a.symbol}\n` +
-        `Timeframe: ${a.timeframe}\n` +
-        `Visible price: ${a.visiblePrice ?? 'UNKNOWN'}\n` +
-        `Trend: ${a.trend}\n` +
-        `Liquidity: ${a.liquiditySweep}\n` +
-        `MSS/BOS: ${a.mssBos}\n` +
-        `FVG: ${a.fvg}\n` +
-        `Order Block: ${a.orderBlock}\n` +
-        `Confidence: ${a.confidence}%\n\n` +
-        `FINAL SIGNAL: WAIT\n` +
-        `Entry / SL / TP: NOT GENERATED`;
-    } catch(e) {
-      result.textContent = `Vision unavailable: ${e.message}`;
+      const a = await localOllama();
+      renderAnalysis(a, `Ollama local · ${getModel()}`);
+      setStatus('Ollama local analysis complete.', true);
+    } catch(localError) {
+      setStatus(`Local Ollama unavailable: ${localError.message}. Trying Render…`);
+      try {
+        const a = await renderOllama();
+        renderAnalysis(a, 'Render → Ollama');
+        setStatus('Render → Ollama analysis complete.', true);
+      } catch(renderError) {
+        result.textContent =
+          `Vision unavailable.\n\nLocal Ollama: ${localError.message}\nRender → Ollama: ${renderError.message}`;
+        setStatus('Ollama is not reachable.', false);
+      }
     } finally {
-      button.disabled = false;
+      button.disabled=false;
     }
   });
 })();
