@@ -16,7 +16,7 @@ const HOST = '0.0.0.0';
 // Telegram is user-configurable. Tokens are never sent to the browser and are kept
 // only in server memory for the active session. Optional env credentials remain
 // supported for owner/admin fallback deployments.
-const TELEGRAM_TOKEN = String(process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_BOT_TOKEN || process.env.VZONEAI_TELEGRAM_TOKEN || process.env.TELEGRAM_API_TOKEN || process.env.BOT_TOKEN || '').trim();
+const TELEGRAM_TOKEN = String(process.env.TELEGRAM_AUTO_TOKEN || process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_BOT_TOKEN || process.env.VZONEAI_TELEGRAM_TOKEN || process.env.TELEGRAM_API_TOKEN || process.env.BOT_TOKEN || '').trim();
 const TELEGRAM_CHAT_ID = String(process.env.TELEGRAM_CHAT_ID || process.env.TELEGRAM_TARGET_CHAT_ID || process.env.TELEGRAM_ID || process.env.TARGET_CHAT_ID || '').trim();
 const TELEGRAM_WEBHOOK_SECRET = String(process.env.TELEGRAM_WEBHOOK_SECRET || '').trim();
 const TELEGRAM_WEBHOOK_BASE_URL = (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
@@ -1646,6 +1646,6 @@ app.use((err,req,res,next)=>{
   app.listen(PORT,HOST,()=>{
     console.log(`V TRADE AI v${APP_VERSION} Smart Entry PRO server listening on ${HOST}:${PORT}`);
     console.log(`[TELEGRAM] token=${TELEGRAM_TOKEN?'CONFIGURED':'MISSING'} | chatId=${TELEGRAM_CHAT_ID?'CONFIGURED':'MISSING'} | baseUrl=${TELEGRAM_WEBHOOK_BASE_URL||'MISSING'} | secret=${TELEGRAM_WEBHOOK_SECRET?'CONFIGURED':'AUTO'}`);
-    if(!TELEGRAM_TOKEN) console.error('[TELEGRAM] BLOCKED | Add the Telegram bot token to Render Environment. Accepted: TELEGRAM_TOKEN, TELEGRAM_BOT_TOKEN, VZONEAI_TELEGRAM_TOKEN, TELEGRAM_API_TOKEN, BOT_TOKEN.');
+    if(!TELEGRAM_TOKEN) console.error('[TELEGRAM] BLOCKED | Add the Telegram bot token to Render Environment. Accepted: TELEGRAM_AUTO_TOKEN, TELEGRAM_TOKEN, TELEGRAM_BOT_TOKEN, VZONEAI_TELEGRAM_TOKEN, TELEGRAM_API_TOKEN, BOT_TOKEN.');
     else if(!TELEGRAM_CHAT_ID) console.warn('[TELEGRAM] ENV CHAT ID missing | Bot commands still work; auto alerts need TELEGRAM_CHAT_ID or a connected UI session.');
   }); })();

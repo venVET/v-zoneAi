@@ -93,7 +93,7 @@ services:
         value: "0.02"
       - key: AUTO_TRADE_TRAIL_TRIGGER
         value: "2.00"
-      - key: TELEGRAM_TOKEN
+      - key: TELEGRAM_AUTO_TOKEN
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
