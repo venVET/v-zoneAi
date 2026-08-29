@@ -1,20 +1,24 @@
-V-TRADE AI — OLLAMA VISION SETUP
+V-TRADE AI — FINAL OLLAMA VISION SETUP
 
 1. Install Ollama on Windows.
-2. Open CMD and run:
-   ollama pull qwen2.5vl:3b
-3. Make sure Ollama is running:
-   ollama serve
-   (If the Ollama desktop app is already running, you usually do not need this command.)
-4. Open the V TRADE AI dashboard -> "Screenshot AI".
-5. Upload PNG/JPG/WebP chart (max 6 MB).
-6. Select/save the Ollama model if needed.
-7. Click "Analyze Screenshot".
+2. Run START-OLLAMA-VISION-BRIDGE.cmd.
+   - It checks Ollama.
+   - It pulls qwen2.5vl:3b if missing.
+   - It starts the local bridge at http://127.0.0.1:11435.
+3. Keep that CMD window open.
+4. Open the V TRADE AI GitHub Pages dashboard.
+5. Screenshot AI -> Choose File -> upload PNG/JPG/WebP (max 6 MB).
+6. Click Analyze Screenshot.
 
-IMPORTANT
-- The dashboard first tries http://127.0.0.1:11434 directly, so Ollama can run on the user's PC.
-- If local Ollama is unavailable, the page falls back to Render -> Ollama.
-- A Render server cannot use its own 127.0.0.1 to reach Ollama running on your PC. For Render -> Ollama, OLLAMA_BASE_URL must point to a reachable Ollama host.
-- Vision output is deliberately WAIT-only evidence extraction. It does not place trades and does not generate Entry/SL/TP.
+WHY THE BRIDGE EXISTS
+The browser must not call Ollama's 11434 API directly. Direct browser access can fail because of CORS.
+The local bridge receives the image from the browser and calls Ollama server-side.
+So the flow is:
+GitHub Pages -> localhost:11435 bridge -> localhost:11434 Ollama -> Vision model.
 
-If browser CORS blocks local Ollama, set Ollama's allowed origins for the dashboard origin before testing.
+RENDER NOTE
+Render cannot reach Ollama running on your personal PC at 127.0.0.1.
+Therefore the primary/local path is the PC bridge. The Render -> Ollama fallback only works if OLLAMA_BASE_URL on Render points to a reachable Ollama host.
+
+VISION SAFETY
+The Vision module is evidence extraction only. It returns WAIT as the final signal and does not create orders, Entry, SL or TP.

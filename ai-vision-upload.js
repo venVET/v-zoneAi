@@ -8,8 +8,8 @@
   const status = $('visionStatus');
   if (!input || !preview || !result || !button) return;
 
-  const LOCAL_OLLAMA = 'http://127.0.0.1:11434';
   const DEFAULT_MODEL = 'qwen2.5vl:3b';
+  const LOCAL_BRIDGE = 'http://127.0.0.1:11435';
   let dataUrl = '';
 
   function setStatus(text, ok=false) {
@@ -51,26 +51,23 @@ Return ONLY valid JSON:
   }
 
   async function localOllama() {
+    const bridge = LOCAL_BRIDGE;
     const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), 45000);
+    const timer = setTimeout(()=>controller.abort(), 50000);
     try {
-      const r = await fetch(`${LOCAL_OLLAMA}/api/generate`, {
+      const r = await fetch(`${bridge}/api/vision/analyze`, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          model:getModel(),
-          prompt:buildPrompt(),
-          images:[dataUrl.split(',')[1]],
-          stream:false,
-          format:'json',
-          options:{temperature:0}
-        }),
+        body:JSON.stringify({imageDataUrl:dataUrl}),
         signal:controller.signal
       });
       const text = await r.text();
       let d={}; try { d=text?JSON.parse(text):{}; } catch(_){}
-      if (!r.ok) throw new Error(d.error || `Ollama HTTP ${r.status}`);
-      return normalize(JSON.parse(d.response || '{}'));
+      if (!r.ok || !d.success) throw new Error(d.error || `Local Ollama bridge HTTP ${r.status}`);
+      return normalize(d.analysis || {});
+    } catch(e) {
+      if (e?.name === 'AbortError') throw new Error('Local Ollama bridge timeout');
+      throw e;
     } finally {
       clearTimeout(timer);
     }
@@ -129,9 +126,16 @@ Return ONLY valid JSON:
   button.addEventListener('click', async () => {
     if (!dataUrl) { result.textContent='Upload a chart screenshot first.'; return; }
     button.disabled = true;
-    setStatus('Trying local Ollama…');
-    result.textContent='Analyzing screenshot…';
+    setStatus('Checking Ollama Local Bridge…');
+    result.textContent='Checking local Vision service…';
     try {
+      const health = await fetch(`${LOCAL_BRIDGE}/health`, {cache:'no-store'});
+      const hd = await health.json().catch(()=>({}));
+      if (!health.ok || !hd.success) {
+        throw new Error(hd.error || 'Ollama Local Bridge is not running');
+      }
+      setStatus(`Trying local Ollama · ${hd.model}`, true);
+      result.textContent='Analyzing screenshot…';
       const a = await localOllama();
       renderAnalysis(a, `Ollama local · ${getModel()}`);
       setStatus('Ollama local analysis complete.', true);
