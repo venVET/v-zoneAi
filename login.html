@@ -73,7 +73,7 @@ throw error;
 function routeByRole(user){
 const r=String(user?.role||'user').trim().toLowerCase();
 if(r==='admin'||r==='administrator')return 'admin-dashboard.html?v='+ROUTE_VERSION;
-return 'premium-dashboard-live.html?v='+ROUTE_VERSION;
+return 'dashboard.html?v='+ROUTE_VERSION;
 }
 function save(data){
 if(!data?.token)throw new Error('Authentication token was not returned.');

@@ -5,7 +5,7 @@
   const BACKEND = 'https://v-trade-ai.onrender.com';
   const AUTH_KEY = 'vtrade_auth_token';
   const LEGACY_AUTH_KEY = 'vtrade_auth';
-  const USER_DASHBOARD = 'premium-dashboard-live.html?v=20260819-user-dashboard';
+  const USER_DASHBOARD = 'dashboard.html?v=20260819-user-dashboard';
   const ADMIN_DASHBOARD = 'admin-dashboard.html?v=20260819-admin-dashboard';
 
   const authToken = () => sessionStorage.getItem(AUTH_KEY) || sessionStorage.getItem(LEGACY_AUTH_KEY) || localStorage.getItem(AUTH_KEY) || localStorage.getItem(LEGACY_AUTH_KEY) || '';
@@ -48,11 +48,11 @@
   window.VTRADE_BACKEND = BACKEND;
 
   const currentFile = () => String(location.pathname.split('/').pop() || '').toLowerCase();
-  if (currentFile() === 'premium-dashboard-live.html' && !authToken()) { location.replace('connection.html?required=login'); return; }
-  window.addEventListener('vtrade:session-expired', () => { if (currentFile() === 'premium-dashboard-live.html') { window.VTRADE_CONNECTION.clearSession(); location.replace('connection.html?expired=1'); } });
+  if (currentFile() === 'dashboard.html' && !authToken()) { location.replace('connection.html?required=login'); return; }
+  window.addEventListener('vtrade:session-expired', () => { if (currentFile() === 'dashboard.html') { window.VTRADE_CONNECTION.clearSession(); location.replace('connection.html?expired=1'); } });
 
   function installAccountLayer() {
-    if (currentFile() !== 'premium-dashboard-live.html') return;
+    if (currentFile() !== 'dashboard.html') return;
     const top = document.querySelector('.top');
     if (!top || document.getElementById('vtradeAccountLayer')) return;
     const css = document.createElement('style'); css.id = 'vtradeAccountLayerCss'; css.textContent = `
