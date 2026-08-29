@@ -26,7 +26,7 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 const REQUIRE_WEBHOOK_SECRET = String(process.env.REQUIRE_WEBHOOK_SECRET || 'false').toLowerCase() === 'true';
 const TELEGRAM_SESSION_TTL_MS = Math.max(5 * 60 * 1000, Number(process.env.TELEGRAM_SESSION_TTL_MS || 24 * 60 * 60 * 1000));
 const MT5_MAX_AGE_MS = Number(process.env.MT5_MAX_AGE_MS || 15000);
-const APP_VERSION = '7.3.5-TELEGRAM-WEBHOOK-FIX';
+const APP_VERSION = '7.3.6-CORS-FIX-TELEGRAM';
 const APP_BASE_URL = (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
 const AUTH_SESSION_TTL_MS = Math.max(15 * 60 * 1000, Number(process.env.AUTH_SESSION_TTL_MS || 8 * 60 * 60 * 1000));
 const ANALYSIS_REQUEST_TIMEOUT_MS = Math.max(1500, Number(process.env.ANALYSIS_REQUEST_TIMEOUT_MS || 7000));
@@ -246,6 +246,9 @@ const ALLOWED_ORIGINS = [...new Set([
   'https://venvet.github.io'
 ].filter(Boolean))];
 
+const CORS_METHODS = 'GET,POST,OPTIONS';
+const CORS_HEADERS = 'Content-Type, x-vtrade-session, x-vtrade-key, x-vtrade-admin-key, x-vtrade-auth, x-vtrade-request';
+
 const corsOptions = {
   origin(origin, cb) {
     const normalized = normalizeOrigin(origin);
@@ -327,8 +330,28 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false 
 if (process.env.RENDER && !ALLOWED_ORIGINS.length) {
   throw new Error('ALLOWED_ORIGINS must be configured in production');
 }
+
+// Explicit CORS headers are applied before every API/static response.
+// This avoids browser "Failed to fetch" when a proxy or error response
+// would otherwise be returned without the CORS headers.
+app.use((req, res, next) => {
+  const origin = normalizeOrigin(req.headers.origin || '');
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', CORS_METHODS);
+    res.setHeader('Access-Control-Allow-Headers', CORS_HEADERS);
+    res.setHeader('Access-Control-Max-Age', '600');
+    res.vary('Origin');
+  }
+  if (req.method === 'OPTIONS') {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return res.status(204).end();
+    return res.status(403).json({ success:false, error:'CORS origin not allowed' });
+  }
+  next();
+});
+
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50kb' }));
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false }));
@@ -348,8 +371,14 @@ function requireAdmin(req,res,next) {
 
 // Lightweight public diagnostic used by the GitHub Pages login screen.
 // It never exposes credentials, hashes, or secrets.
-app.get('/api/auth/health', (_req, res) => {
-  res.set('Cache-Control', 'no-store');
+app.get('/api/auth/health', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  const origin = normalizeOrigin(req.headers.origin || '');
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', req.headers.origin);
+    res.set('Access-Control-Allow-Credentials', 'true');
+    res.vary('Origin');
+  }
   res.json({
     success: true,
     auth: 'online',
