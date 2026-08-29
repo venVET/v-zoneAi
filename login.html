@@ -48,7 +48,7 @@ body{display:grid;place-items:center;padding:12px}
 </main>
 <script>
 const API='https://v-trade-ai.onrender.com';
-const ROUTE_VERSION='20260828-route-v4';
+const ROUTE_VERSION='20260829-login-cors-v5';
 const $=id=>document.getElementById(id);
 let role='user',challenge='';
 function setRole(r){role=r;$('userMode').classList.toggle('active',r==='user');$('adminMode').classList.toggle('active',r==='admin');$('submit').textContent=r==='admin'?'👑 Sign in as Admin':'🔐 Sign in as User';}
@@ -56,7 +56,12 @@ function say(text,ok=false){$('msg').textContent=text;$('msg').style.color=ok?'#
 async function api(path,options={}){
 const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),12000);
 try{
-const response=await fetch(API+path,{...options,mode:'cors',credentials:'omit',cache:'no-store',signal:controller.signal,headers:{'Content-Type':'application/json','x-vtrade-auth':String(sessionStorage.getItem('vtrade_auth_token')||localStorage.getItem('vtrade_auth_token')||''),...(options.headers||{})}});
+const headers=new Headers(options.headers||{});
+const hasBody=options.body!=null;
+if(hasBody&&!headers.has('Content-Type')) headers.set('Content-Type','application/json');
+const authToken=String(sessionStorage.getItem('vtrade_auth_token')||localStorage.getItem('vtrade_auth_token')||'');
+if(authToken) headers.set('x-vtrade-auth',authToken);
+const response=await fetch(API+path,{...options,mode:'cors',credentials:'omit',cache:'no-store',signal:controller.signal,headers});
 const text=await response.text();let data={};try{data=text?JSON.parse(text):{};}catch{data={error:text||`HTTP ${response.status}`};}
 if(!response.ok)throw new Error(data.error||`Request failed (${response.status})`);return data;
 }catch(error){
@@ -96,7 +101,9 @@ catch(error){say(error.message||'2FA verification failed.');}
 };
 (async()=>{
 try{
-const data=await api('/api/auth/health',{method:'GET'});
+const response=await fetch(API+'/api/auth/health',{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});
+if(!response.ok)throw new Error(`HTTP ${response.status}`);
+const data=await response.json();
 $('backend').textContent=data?.success?'● Render backend connected':'● Render backend responded';
 $('backend').classList.add('ok');
 }catch(error){
