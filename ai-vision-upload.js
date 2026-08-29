@@ -62,11 +62,14 @@ Return ONLY valid JSON:
         signal:controller.signal
       });
       const text = await r.text();
-      let d={}; try { d=text?JSON.parse(text):{}; } catch(_){}
+      let d={}; try { d=text?JSON.parse(text):{}; } catch(_){ }
       if (!r.ok || !d.success) throw new Error(d.error || `Local Ollama bridge HTTP ${r.status}`);
       return normalize(d.analysis || {});
     } catch(e) {
       if (e?.name === 'AbortError') throw new Error('Local Ollama bridge timeout');
+      if (e instanceof TypeError || /Failed to fetch/i.test(String(e?.message||''))) {
+        throw new Error('Local Ollama Bridge is not reachable. Run START-OLLAMA-VISION-BRIDGE.cmd on this PC and keep it open.');
+      }
       throw e;
     } finally {
       clearTimeout(timer);
@@ -134,22 +137,18 @@ Return ONLY valid JSON:
       if (!health.ok || !hd.success) {
         throw new Error(hd.error || 'Ollama Local Bridge is not running');
       }
+      if (hd.modelInstalled === false) {
+        throw new Error(`Vision model ${hd.model} is not installed. START-OLLAMA-VISION-BRIDGE.cmd will install it.`);
+      }
       setStatus(`Trying local Ollama · ${hd.model}`, true);
       result.textContent='Analyzing screenshot…';
       const a = await localOllama();
       renderAnalysis(a, `Ollama local · ${getModel()}`);
       setStatus('Ollama local analysis complete.', true);
     } catch(localError) {
-      setStatus(`Local Ollama unavailable: ${localError.message}. Trying Render…`);
-      try {
-        const a = await renderOllama();
-        renderAnalysis(a, 'Render → Ollama');
-        setStatus('Render → Ollama analysis complete.', true);
-      } catch(renderError) {
-        result.textContent =
-          `Vision unavailable.\n\nLocal Ollama: ${localError.message}\nRender → Ollama: ${renderError.message}`;
-        setStatus('Ollama is not reachable.', false);
-      }
+      result.textContent =
+        `Vision unavailable.\n\n${localError.message}\n\nFlow: GitHub Pages → localhost:11435 → Ollama :11434`;
+      setStatus('Start the Local Ollama Vision Bridge on this PC.', false);
     } finally {
       button.disabled=false;
     }

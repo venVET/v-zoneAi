@@ -200,5 +200,5 @@ applyLang();load();fetchHeadlines();setInterval(load,5000);setInterval(fetchHead
   m.value=localStorage.getItem('vtrade_ollama_model')||'qwen2.5vl:3b';
   b?.addEventListener('click',()=>{localStorage.setItem('vtrade_ollama_model',m.value.trim()||'qwen2.5vl:3b'); const s=document.getElementById('visionStatus'); if(s)s.textContent='Saved Ollama model: '+(m.value.trim()||'qwen2.5vl:3b');});
 })();
-</script><script src="ai-vision-upload.js"></script><script src="site-connection.js"></script></body>
+</script><script src="ai-vision-upload.js?v=20260829fix7"></script><script src="site-connection.js"></script></body>
 </html>
