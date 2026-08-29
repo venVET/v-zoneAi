@@ -96,11 +96,13 @@ catch(error){say(error.message||'2FA verification failed.');}
 };
 (async()=>{
 try{
-const response=await fetch(API+'/api/auth/health',{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});
-if(!response.ok)throw new Error(`HTTP ${response.status}`);
-const data=await response.json().catch(()=>({}));
-$('backend').textContent=data?.success?'● Render backend connected':'● Render backend responded';$('backend').classList.add('ok');
-}catch(error){$('backend').textContent='● Render backend unavailable';$('backend').classList.add('bad');}
+const data=await api('/api/auth/health',{method:'GET'});
+$('backend').textContent=data?.success?'● Render backend connected':'● Render backend responded';
+$('backend').classList.add('ok');
+}catch(error){
+$('backend').textContent='● Render backend unavailable';
+$('backend').classList.add('bad');
+}
 })();
 </script>
 </body>

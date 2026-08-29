@@ -243,7 +243,7 @@ function normalizeOrigin(value) {
 const ALLOWED_ORIGINS = [...new Set([
   ...((process.env.ALLOWED_ORIGINS || '').split(',').map(normalizeOrigin).filter(Boolean)),
   normalizeOrigin(APP_BASE_URL),
-  'https://vetven964.github.io'
+  'https://venvet.github.io'
 ].filter(Boolean))];
 
 const corsOptions = {
